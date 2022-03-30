@@ -1,4 +1,4 @@
-# scvi-tools-skeleton
+# destVI utilities
 
 [![Stars](https://img.shields.io/github/stars/YosefLab/scvi-tools-skeleton?logo=GitHub&color=yellow)](https://github.com/YosefLab/scvi-tools/stargazers)
 [![Documentation Status](https://readthedocs.org/projects/scvi-tools-skeleton/badge/?version=latest)](https://scvi-tools-skeleton.readthedocs.io/en/stable/?badge=stable)
@@ -12,4 +12,4 @@ using this skeleton, please use the scvi-tools
 [forum](https://discourse.scvi-tools.org/).
 
 
-Getting started development using this skeleton is similar to [getting started](https://docs.scvi-tools.org/en/stable/contributing/index.html) with scvi-tools.
+Utilities for downstream analysis of results after running destVI to generate similar figures as in the original publication.
