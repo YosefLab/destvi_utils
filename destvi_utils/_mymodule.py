@@ -1,6 +1,19 @@
 import anndata as ad
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.interpolate import splrep, splev
+from scipy.stats import ks_2samp
+import pandas as pd
+import hotspot
+import base64
+from io import BytesIO
+from scipy.spatial.distance import pdist, squareform
+import cmap2d
+import gseapy
+import torch
+from adjustText import adjust_text
+from statsmodels.stats.multitest import multipletests
+from sklearn.mixture import GaussianMixture
 
 
 def automatic_proportion_threshold(
@@ -38,65 +51,71 @@ def automatic_proportion_threshold(
     html = "<h2>Automatic thresholding</h2>"
 
     for name_ct in ct_list:
+        fig = plt.figure(figsize=(20, 5))
+        fig.suptitle(name_ct+": critical points")
+
         array = st_adata.obsm["proportions"][name_ct]
         vmax = np.quantile(array.values, 0.99)
+
+        # get characteristic values
+        quantiles, stack = _form_stacked_quantiles(array.values)
+        index, z_values = _get_autocorrelations(st_adata, stack, quantiles)
+        z_values, smoothed, derivative, sign_2nd, _ = _smooth_get_critical_points(index, z_values, s=0.1)
+        ipoints = index[np.where(sign_2nd[:-1] != sign_2nd[1:])[0][0]]
+        nom_map = index[np.argmin(derivative)]
         
         #PLOT 1 shows proportions in spatial dimensions without thresholding
-        def plot_proportions_xy(ax, threshold):
-            fig = plt.figure(figsize=(20, 5))
-            fig.suptitle(name_ct+": critical points")
-            
-            _prettify_axis(ax1, False)
+        def plot_proportions_xy(ax, threshold):            
+            _prettify_axis(ax, False)
             plt.xticks([])
             plt.yticks([])
             plt.xlabel("Spatial1")
             plt.ylabel("Spatial2")
-            
             plt.scatter(
                 st_adata.obsm["location"][:, 0], st_adata.obsm["location"][:, 1], 
-                c=array * (array.values > threshold), s=8, vmax=vmax)
+                c=array * (array.values > threshold), s=14, vmax=vmax)
             plt.title("name_ct, main threshold: t={:0.3f}".format(threshold))
             plt.tight_layout()
+
+            return ax
 
         ax1 = plt.subplot(141)
         ax1 = plot_proportions_xy(ax1, 0)
 
-        ax4 = plt.subplot(144)
-        ax4 = plot_proportions_xy(ax1, nom_map)
-
-        # get characteristic values
-        quantiles, stack = form_stacked_quantiles(array.values)
-        index, z_values = get_autocorrelations(st_adata, stack, quantiles)
-        z_values, smoothed, derivative, sign_2nd, _ = smooth_get_critical_points(index, z_values, s=0.1)
-
         #plot characteristic plots
-        ymax = np.max(z_values)
+        def characteristic_plot(ax):
+            ymax = np.max(z_values)
+            _prettify_axis(ax)
+            plt.plot(index, z_values, label="noisy data")
+            plt.plot(index, smoothed, label="fitted")
+            plt.plot(index, ymax * sign_2nd, label="sign 2st derivative")
+            # identify points
+            plt.vlines(ipoints, ymin=0, ymax=np.max(z_values), color="red", linestyle="--", label="secondary thresholds")
+            # nominal mapping
+            plt.axvline(nom_map, c="red", label="main threshold")
+            plt.ylabel("Autocorrelation")
+            plt.xlabel("proportions value")
+            plt.title("Autocorrelation study")
+            plt.legend()
+
+            return ax
+
         ax2 = plt.subplot(142)
-        _prettify_axis(ax2)
-        plt.plot(index, z_values, label="noisy data")
-        plt.plot(index, smoothed, label="fitted")
-        plt.plot(index, ymax * sign_2nd, label="sign 2st derivative")
-        # identify points
-        ipoints = index[np.where(sign_2nd[:-1] != sign_2nd[1:])[0]]
-        plt.vlines(ipoints, ymin=0, ymax=np.max(z_values), color="red", linestyle="--", label="secondary thresholds")
-        # nominal mapping
-        nom_map = index[np.argmin(derivative)]
-        plt.axvline(nom_map, c="red", label="main threshold")
-        plt.ylabel("Autocorrelation")
-        plt.xlabel("proportions value")
-        plt.title("Autocorrelation study")
-        plt.legend()
+        ax2 = characteristic_plot(ax2)
         
         # plot on top of histogram
         ax3 = plt.subplot(143)
         _prettify_axis(ax3)
-        n, bins, patches = plt.hist(array.values)
+        n, _, _ = plt.hist(array.values)
         plt.vlines(ipoints, ymin=0, ymax=np.max(n), color="red", linestyle="--", label="secondary thresholds")
         # nominal mapping
         plt.axvline(nom_map, c="red", label="main threshold")
         plt.xlabel("proportions value")
         plt.title("Cell type frequency histogram")
         plt.legend()
+
+        ax4 = plt.subplot(144)
+        ax4 = plot_proportions_xy(ax4, nom_map)
         
         # add thresholds to dict
         nominal_threshold[name_ct] = nom_map
@@ -111,7 +130,199 @@ def automatic_proportion_threshold(
     # write HTML
     with open(output_file,'w') as f:
         f.write(html)
+    
+    return ct_thresholds, nominal_threshold
 
+def explore_gamma_space(
+    st_adata,
+    sc_adata,
+    st_model,
+    sc_model,
+    ct_thresholds=None,
+    output_file='sPCA.html',
+    ct_list=None):
+    """
+    Function to compute automatic threshold on cell type proportion values.
+    For further reference check [Lopez22].
+
+    Parameters
+    ----------
+    st_adata
+        Spatial sequencing dataset with proportions in obsm['proportions']
+    sc_adata
+        Single cell sequencing dataset used for training CondSCVI
+    st_model
+        Trained destVI model
+    sc_model
+        Trained CondSCVI model
+    ct_threshold
+        List with threshold values for cell type proportions
+    output_file
+        File where html output is stored. Defaults to 'sPCA.html'
+    ct_list
+        Celltypes to use. Defaults to all celltypes.
+
+    Returns
+    -------
+    ct_thresholds
+        Dictionary containing all threshold values.
+    
+    """
+    html = "<h1>sPCA analysis</h1>"
+
+    if ct_thresholds is None:
+        ct_thresholds = {ct: 0 for ct in ct_list}
+    tri_coords = [[-1,-1], [-1,1], [1, 0]]
+    tri_colors = [(1,0,0), (0,1,0), (0,0,1)]
+
+    gamma = st_model.get_gamma(return_numpy=True)
+
+    for name_ct in ct_list:
+        filter_ = st_adata.obsm["proportions"][name_ct].values > ct_thresholds[name_ct]
+        locations = st_adata.obsm["location"][filter_]
+        proportions = st_adata.obsm["proportions"][name_ct].values[filter_]
+        ct_index = np.where(name_ct == st_model.cell_type_mapping)[0][0]
+        data = gamma[:, :, ct_index][filter_]
+        vec = _get_spatial_components(locations, proportions, data)
+        # project data onto them
+        projection = np.dot(data - np.mean(data, 0), vec)
+
+        # create the colormap
+        cmap = cmap2d.TernaryColorMap(tri_coords, tri_colors)
+
+        # apply colormap to spatial data
+        color = np.vstack([cmap(projection[i]) for i in range(projection.shape[0])])
+        
+        fig = plt.figure(figsize=(15, 5))
+        fig.suptitle(name_ct)
+        fig.tight_layout(rect=[0, 0.1, 1, 0.2])
+        ax1 = plt.subplot(132)
+        _prettify_axis(ax1)
+        plt.scatter(projection[:, 0], projection[:, 1],c=color, marker="X")
+        # variance and explained variance
+        total_var = np.sum(np.diag(np.cov(data.T)))
+        explained_var = 100 * np.diag(np.cov(projection.T)) / total_var 
+        plt.xlabel("SpatialPC1 ({:.1f}% explained var)".format(explained_var[0]))
+        plt.ylabel("SpatialPC2 ({:.1f}% explained var)".format(explained_var[1]))
+        plt.title("Projection of the spatial data")
+
+        ax3 = plt.subplot(131)
+        _prettify_axis(ax3, False)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel("Spatial1")
+        plt.ylabel("Spatial2")
+        plt.scatter(st_adata.obsm["location"][:, 0], st_adata.obsm["location"][:, 1], alpha=0.1, s=7, c="blue")
+        plt.scatter(st_adata.obsm["location"][filter_, 0], st_adata.obsm["location"][filter_, 1], 
+                    c=color, s=7)
+        plt.title("Spatial transcriptome coloring")
+
+        # go back to the single-cell data and find gene correlated with the axis
+        sc_adata_slice = sc_adata[sc_adata.obs[
+            sc_model.registry_['setup_args']['labels_key']] == name_ct]
+        normalized_counts = sc_adata_slice.X.A
+        sc_latent = sc_model.get_latent_representation(sc_adata_slice)
+        sc_projection = np.dot(sc_latent - np.mean(sc_latent,0), vec)
+
+        # show the colormap for single-cell data
+        color = np.vstack([cmap(sc_projection[i]) for i in range(sc_projection.shape[0])])
+        ax2 = plt.subplot(133)
+        _prettify_axis(ax2)
+        plt.scatter(sc_projection[:, 0], sc_projection[:, 1],c=color)
+        # variance and explained variance
+        total_var = np.sum(np.diag(np.cov(sc_latent.T)))
+        explained_var = 100 * np.diag(np.cov(sc_projection.T)) / total_var 
+        plt.xlabel("SpatialPC1 ({:.1f}% explained var)".format(explained_var[0]))
+        plt.ylabel("SpatialPC2 ({:.1f}% explained var)".format(explained_var[1]))
+        plt.title("Projection of the scRNA-seq data")
+        plt.tight_layout()
+
+        # DUMP TO HTML
+        tmpfile = BytesIO()
+        plt.savefig(tmpfile, format='png')
+        encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+        html += '<img src=\'data:image/png;base64,{}\'>'.format(encoded)
+        
+        # calculate correlations, and for each axis:
+        # (A) display top 50 genes + AND - (B) for each gene set, get GSEA 
+        for d in [0, 1]:
+            html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+            r = _vcorrcoef(normalized_counts.T, sc_projection[:, d])
+            for mode in ["Positively", "Negatively"]:
+                ranking = np.argsort(r)
+                if mode == "Positively":
+                    ranking = ranking[::-1]
+                gl = list(st_adata.var.index[ranking[:50]])
+                enr = gseapy.enrichr(gene_list=gl, description='pathway', 
+                                    gene_sets='BioPlanet_2019', outdir='test', no_plot=True)
+                html += f"<h5> {mode} </h5>"
+                html += "<p>" + ", ".join(gl) + "</p>"
+                text_signatures = enr.results.head(10)["Term"].values
+                for i in range(10):
+                    if enr.results.iloc[i]["Adjusted P-value"] < 0.01:
+                        text_signatures[i] += "*"
+                
+                html += "<p>" + ", ".join(text_signatures) + "</p>"            
+    # write HTML
+    with open(output_file,'w') as f:
+        f.write(html)
+
+def de_genes(st_adata, st_model, mask, ct, mask2=None, interesting_genes=None, de_results=None):
+    # get statistics
+    if mask2 is None:
+        mask2 = ~mask
+
+    if de_results is None:
+        avg_library_size = np.mean(np.sum(st_adata.layers["counts"], axis=1).flatten())
+        exp_px_o = st_model.module.px_o.detach().exp().cpu().numpy()
+        imputations = st_model.get_scale_for_ct(ct).values
+        mean = avg_library_size * imputations
+
+        concentration = torch.tensor(avg_library_size * imputations / exp_px_o)
+        rate = torch.tensor(1. / exp_px_o)
+
+        # slice conditions
+        N_mask, N_unmask = (10, 10)
+
+        def simulation(mask_, N_mask_):
+            # generate 
+            simulated = torch.distributions.Gamma(
+                concentration=concentration[mask_], rate = rate).sample((N_mask_,)).cpu().numpy()
+            simulated = np.log(simulated + 1)
+            simulated = simulated.reshape((-1, simulated.shape[-1]))
+            return simulated
+
+        simulated_case = simulation(mask, N_mask)
+        simulated_control = simulation(mask2, N_unmask)
+
+        de = np.array([ks_2samp(simulated_case[:, gene], 
+                    simulated_control[:, gene], 
+                    alternative='two-sided', mode="asymp") for gene in range(simulated_control.shape[1])])
+        lfc = np.log2(1+mean[mask]).mean(0) - np.log2(1+mean[mask2]).mean(0)
+        res = pd.DataFrame(data=np.vstack([lfc, de[:, 0], de[:, 1]]), columns=st_adata.var.index, 
+                        index=["log2FC", "pval", "score"]).T
+
+    corr_p_vals = multipletests(res['pval'], method='fdr_bh')
+    min_score = np.min(res['score'][corr_p_vals[0]])
+    plt.figure(figsize=(5, 5))
+    # plot DE genes
+    mask_de = (res['score'] > min_score) * (np.abs(lfc) > _get_delta(lfc))
+    de_scatter = plt.scatter(lfc[mask_de], res['score'][mask_de], s=10, c="r")
+    nde_scatter = plt.scatter(lfc[~mask_de], res['score'][~mask_de], s=10, c="black")
+    plt.xlabel("log2 fold-change \n{:s}".format(ct))
+    plt.ylabel("score")
+    plt.legend((de_scatter, nde_scatter), ("DE genes", "Other genes"), frameon=True)
+    if interesting_genes is None:
+        interesting_genes = ["Mmp2", "Dcn", "Col3a1", "Pcolce", "Col4a1", "Sparc", "Mxra8", "Lgals1"]
+    texts = []
+    for i, gene in enumerate(interesting_genes):
+        ind = np.where(st_adata.var.index == gene)[0]
+        x_coord, y_coord = lfc[ind], res['score'][ind]
+        plt.scatter(x_coord, y_coord, c="r", s=10)
+        texts += [plt.text(x_coord, y_coord, gene, fontsize=12)]
+    adjust_text(texts, lfc, res['score'].values, arrowprops=dict(arrowstyle="-", color='blue'))
+
+    return res
 
 def _prettify_axis(ax, all_=False):
     if not all_:
@@ -131,290 +342,70 @@ def _prettify_axis(ax, all_=False):
 
 def _form_stacked_quantiles(data, N=100):
     quantiles = np.quantile(data, np.linspace(0, 1, N, endpoint=False))
-    return quantiles, np.vstack([flatten(data, q) for q in quantiles])
+    return quantiles, np.vstack([_flatten(data, q) for q in quantiles])
 
 def _flatten(x, threshold):
     return (x > threshold) * x
 
+def _smooth_get_critical_points(x, noisy_data, k=5, s=0.1):
+    f = splrep(x, noisy_data,k=5, s=1)
+    smoothed = splev(x,f)
+    derivative = splev(x,f,der=1)
+    sign_2nd = splev(x,f,der=2) > 0
+    curvature = splev(x,f,der=3)
+    return noisy_data, smoothed, derivative, sign_2nd, curvature
 
+def _get_autocorrelations(st_adata, stacked_quantiles, quantiles):
+    # create Anndata and run hotspot
+    adata = ad.AnnData(stacked_quantiles.T)
+    adata.obs_names = st_adata.obs.index
+    adata.var_names = [str(i) for i in quantiles]
+    adata.obsm["spatial"] = st_adata.obsm["location"]
+    hs = hotspot.Hotspot(adata, model='none', latent_obsm_key="spatial")
+    hs.create_knn_graph(
+        weighted_graph=True, n_neighbors=10,
+    )
+    hs_results = hs.compute_autocorrelations(jobs=1)
+    index = np.array([float(i) for i in hs_results.index.values])
+    return index, hs_results["Z"].values
 
-class MyModule(BaseModuleClass):
-    """
-    Skeleton Variational auto-encoder model.
+def _get_laplacian(s, pi):
+    N = s.shape[0]
+    dist_table = pdist(s)
+    bandwidth = np.median(dist_table)
+    sigma=(0.5 * bandwidth**2)
+    
+    l2_square = squareform(dist_table)**2
+    D = np.exp(- l2_square / sigma) * np.dot(pi, pi.T)
+    L = -D
+    sum_D = np.sum(D, axis=1)
+    for i in range(N):
+            L[i, i] = sum_D[i]
+    return L
 
-    Here we implement a basic version of scVI's underlying VAE [Lopez18]_.
-    This implementation is for instructional purposes only.
+def _get_spatial_components(locations, proportions, data):
+    # find top two spatial principal vectors
+    # form laplacian
+    L = _get_laplacian(locations, proportions)
+    # center data
+    transla_ = data.copy()
+    transla_ -= np.mean(transla_, axis=0)
+    # get eigenvectors
+    A = np.dot(transla_.T, np.dot(L, transla_))
+    w, v = np.linalg.eig(A)
+    # don't forget to sort them...
+    idx = np.argsort(w)[::-1]
+    vec = v[:, idx][:, :2]
+    return vec
 
-    Parameters
-    ----------
-    n_input
-        Number of input genes
-    library_log_means
-        1 x n_batch array of means of the log library sizes. Parameterizes prior on library size if
-        not using observed library size.
-    library_log_vars
-        1 x n_batch array of variances of the log library sizes. Parameterizes prior on library size if
-        not using observed library size.
-    n_batch
-        Number of batches, if 0, no batch correction is performed.
-    n_hidden
-        Number of nodes per hidden layer
-    n_latent
-        Dimensionality of the latent space
-    n_layers
-        Number of hidden layers used for encoder and decoder NNs
-    dropout_rate
-        Dropout rate for neural networks
-    """
+def _vcorrcoef(X,y):
+    Xm = np.reshape(np.mean(X,axis=1),(X.shape[0],1))
+    ym = np.mean(y)
+    r_num = np.sum((X-Xm)*(y-ym),axis=1)
+    r_den = np.sqrt(np.sum((X-Xm)**2,axis=1)*np.sum((y-ym)**2))
+    r = r_num/r_den
+    return r
 
-    def __init__(
-        self,
-        n_input: int,
-        library_log_means: np.ndarray,
-        library_log_vars: np.ndarray,
-        n_batch: int = 0,
-        n_hidden: int = 128,
-        n_latent: int = 10,
-        n_layers: int = 1,
-        dropout_rate: float = 0.1,
-    ):
-        super().__init__()
-        self.n_latent = n_latent
-        self.n_batch = n_batch
-        # this is needed to comply with some requirement of the VAEMixin class
-        self.latent_distribution = "normal"
+def _get_delta(lfc):
+    return np.max(np.abs(GaussianMixture(n_components=3).fit(lfc.reshape(-1, 1)).means_))
 
-        self.register_buffer(
-            "library_log_means", torch.from_numpy(library_log_means).float()
-        )
-        self.register_buffer(
-            "library_log_vars", torch.from_numpy(library_log_vars).float()
-        )
-
-        # setup the parameters of your generative model, as well as your inference model
-        self.px_r = torch.nn.Parameter(torch.randn(n_input))
-        # z encoder goes from the n_input-dimensional data to an n_latent-d
-        # latent space representation
-        self.z_encoder = Encoder(
-            n_input,
-            n_latent,
-            n_layers=n_layers,
-            n_hidden=n_hidden,
-            dropout_rate=dropout_rate,
-        )
-        # l encoder goes from n_input-dimensional data to 1-d library size
-        self.l_encoder = Encoder(
-            n_input,
-            1,
-            n_layers=1,
-            n_hidden=n_hidden,
-            dropout_rate=dropout_rate,
-        )
-        # decoder goes from n_latent-dimensional space to n_input-d data
-        self.decoder = DecoderSCVI(
-            n_latent,
-            n_input,
-            n_layers=n_layers,
-            n_hidden=n_hidden,
-        )
-
-    def _get_inference_input(self, tensors):
-        """Parse the dictionary to get appropriate args"""
-        x = tensors[REGISTRY_KEYS.X_KEY]
-
-        input_dict = dict(x=x)
-        return input_dict
-
-    def _get_generative_input(self, tensors, inference_outputs):
-        z = inference_outputs["z"]
-        library = inference_outputs["library"]
-
-        input_dict = {
-            "z": z,
-            "library": library,
-        }
-        return input_dict
-
-    @auto_move_data
-    def inference(self, x):
-        """
-        High level inference method.
-
-        Runs the inference (encoder) model.
-        """
-        # log the input to the variational distribution for numerical stability
-        x_ = torch.log(1 + x)
-        # get variational parameters via the encoder networks
-        qz_m, qz_v, z = self.z_encoder(x_)
-        ql_m, ql_v, library = self.l_encoder(x_)
-
-        outputs = dict(z=z, qz_m=qz_m, qz_v=qz_v, ql_m=ql_m, ql_v=ql_v, library=library)
-        return outputs
-
-    @auto_move_data
-    def generative(self, z, library):
-        """Runs the generative model."""
-
-        # form the parameters of the ZINB likelihood
-        px_scale, _, px_rate, px_dropout = self.decoder("gene", z, library)
-        px_r = torch.exp(self.px_r)
-
-        return dict(
-            px_scale=px_scale, px_r=px_r, px_rate=px_rate, px_dropout=px_dropout
-        )
-
-    def loss(
-        self,
-        tensors,
-        inference_outputs,
-        generative_outputs,
-        kl_weight: float = 1.0,
-    ):
-        x = tensors[REGISTRY_KEYS.X_KEY]
-        qz_m = inference_outputs["qz_m"]
-        qz_v = inference_outputs["qz_v"]
-        ql_m = inference_outputs["ql_m"]
-        ql_v = inference_outputs["ql_v"]
-        px_rate = generative_outputs["px_rate"]
-        px_r = generative_outputs["px_r"]
-        px_dropout = generative_outputs["px_dropout"]
-
-        mean = torch.zeros_like(qz_m)
-        scale = torch.ones_like(qz_v)
-
-        kl_divergence_z = kl(Normal(qz_m, torch.sqrt(qz_v)), Normal(mean, scale)).sum(
-            dim=1
-        )
-
-        batch_index = tensors[REGISTRY_KEYS.BATCH_KEY]
-        n_batch = self.library_log_means.shape[1]
-        local_library_log_means = F.linear(
-            one_hot(batch_index, n_batch), self.library_log_means
-        )
-        local_library_log_vars = F.linear(
-            one_hot(batch_index, n_batch), self.library_log_vars
-        )
-
-        kl_divergence_l = kl(
-            Normal(ql_m, torch.sqrt(ql_v)),
-            Normal(local_library_log_means, torch.sqrt(local_library_log_vars)),
-        ).sum(dim=1)
-
-        reconst_loss = (
-            -ZeroInflatedNegativeBinomial(mu=px_rate, theta=px_r, zi_logits=px_dropout)
-            .log_prob(x)
-            .sum(dim=-1)
-        )
-
-        kl_local_for_warmup = kl_divergence_z
-        kl_local_no_warmup = kl_divergence_l
-
-        weighted_kl_local = kl_weight * kl_local_for_warmup + kl_local_no_warmup
-
-        loss = torch.mean(reconst_loss + weighted_kl_local)
-
-        kl_local = dict(
-            kl_divergence_l=kl_divergence_l, kl_divergence_z=kl_divergence_z
-        )
-        kl_global = torch.tensor(0.0)
-        return LossRecorder(loss, reconst_loss, kl_local, kl_global)
-
-    @torch.no_grad()
-    def sample(
-        self,
-        tensors,
-        n_samples=1,
-        library_size=1,
-    ) -> np.ndarray:
-        r"""
-        Generate observation samples from the posterior predictive distribution.
-
-        The posterior predictive distribution is written as :math:`p(\hat{x} \mid x)`.
-
-        Parameters
-        ----------
-        tensors
-            Tensors dict
-        n_samples
-            Number of required samples for each cell
-        library_size
-            Library size to scale scamples to
-
-        Returns
-        -------
-        x_new : :py:class:`torch.Tensor`
-            tensor with shape (n_cells, n_genes, n_samples)
-        """
-        inference_kwargs = dict(n_samples=n_samples)
-        _, generative_outputs, = self.forward(
-            tensors,
-            inference_kwargs=inference_kwargs,
-            compute_loss=False,
-        )
-
-        px_r = generative_outputs["px_r"]
-        px_rate = generative_outputs["px_rate"]
-        px_dropout = generative_outputs["px_dropout"]
-
-        dist = ZeroInflatedNegativeBinomial(
-            mu=px_rate, theta=px_r, zi_logits=px_dropout
-        )
-
-        if n_samples > 1:
-            exprs = dist.sample().permute(
-                [1, 2, 0]
-            )  # Shape : (n_cells_batch, n_genes, n_samples)
-        else:
-            exprs = dist.sample()
-
-        return exprs.cpu()
-
-    @torch.no_grad()
-    @auto_move_data
-    def marginal_ll(self, tensors, n_mc_samples):
-        sample_batch = tensors[REGISTRY_KEYS.X_KEY]
-        batch_index = tensors[REGISTRY_KEYS.BATCH_KEY]
-
-        to_sum = torch.zeros(sample_batch.size()[0], n_mc_samples)
-
-        for i in range(n_mc_samples):
-            # Distribution parameters and sampled variables
-            inference_outputs, _, losses = self.forward(tensors)
-            qz_m = inference_outputs["qz_m"]
-            qz_v = inference_outputs["qz_v"]
-            z = inference_outputs["z"]
-            ql_m = inference_outputs["ql_m"]
-            ql_v = inference_outputs["ql_v"]
-            library = inference_outputs["library"]
-
-            # Reconstruction Loss
-            reconst_loss = losses.reconstruction_loss
-
-            # Log-probabilities
-            n_batch = self.library_log_means.shape[1]
-            local_library_log_means = F.linear(
-                one_hot(batch_index, n_batch), self.library_log_means
-            )
-            local_library_log_vars = F.linear(
-                one_hot(batch_index, n_batch), self.library_log_vars
-            )
-            p_l = (
-                Normal(local_library_log_means, local_library_log_vars.sqrt())
-                .log_prob(library)
-                .sum(dim=-1)
-            )
-
-            p_z = (
-                Normal(torch.zeros_like(qz_m), torch.ones_like(qz_v))
-                .log_prob(z)
-                .sum(dim=-1)
-            )
-            p_x_zl = -reconst_loss
-            q_z_x = Normal(qz_m, qz_v.sqrt()).log_prob(z).sum(dim=-1)
-            q_l_x = Normal(ql_m, ql_v.sqrt()).log_prob(library).sum(dim=-1)
-
-            to_sum[:, i] = p_z + p_l + p_x_zl - q_z_x - q_l_x
-
-        batch_log_lkl = torch.logsumexp(to_sum, dim=-1) - np.log(n_mc_samples)
-        log_lkl = torch.sum(batch_log_lkl).item()
-        return log_lkl

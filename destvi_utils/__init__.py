@@ -4,7 +4,7 @@ import logging
 
 from rich.console import Console
 from rich.logging import RichHandler
-from ._mymodule import automatic_proportion_threshold
+from ._mymodule import automatic_proportion_threshold, explore_gamma_space, de_genes
 
 try:
     import importlib.metadata as importlib_metadata
@@ -30,4 +30,4 @@ logger.addHandler(ch)
 # this prevents double outputs
 logger.propagate = False
 
-__all__ = ["automatic_proportion_threshold"]
+__all__ = ["automatic_proportion_threshold", "explore_gamma_space", "de_genes"]

@@ -1,7 +1,7 @@
 References
 ==========
 
-.. note:: The reference below can be referenced in docstrings. See :class:`~mypackage.MyModule` for an example.
+.. note:: The reference below can be referenced in docstrings. See :class:`~destvi_utils.MyModule` for an example.
 
 .. [Lopez22] Romain Lopez, XXX, Nir Yosef (2022),
    *Multi-resolution deconvolution of spatial transcriptomics data reveals continuous patterns of inflammation*,
