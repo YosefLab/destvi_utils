@@ -84,9 +84,9 @@ intersphinx_mapping = dict(
 
 
 # General information about the project.
-project = "mypackage"
+project = "destvi-utils"
 copyright = "2021, Yosef Lab, UC Berkeley"
-author = "Adam Gayoso"
+author = "Can Ergen"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout

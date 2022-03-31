@@ -24,24 +24,22 @@ pip prerequisites:
 
 1. Install Python_, we prefer the `pyenv <https://github.com/pyenv/pyenv/>`_ version management system, along with `pyenv-virtualenv <https://github.com/pyenv/pyenv-virtualenv/>`_.
 
-2. Install PyTorch_. If you have an Nvidia GPU, be sure to install a version of PyTorch that supports it -- scvi-tools runs much faster with a discrete GPU.
-
 .. _Miniconda: https://conda.io/miniconda.html
 .. _Python: https://www.python.org/downloads/
 .. _PyTorch: http://pytorch.org
 
-my_package installation
+destvi-utils installation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Install my_package in one of the following ways:
+Install destvi-utils in one of the following ways:
 
 Through **pip**::
 
-    pip install <my_package>
+    pip install destvi-utils
 
 Through pip with packages to run notebooks. This installs scanpy, etc.::
 
-    pip install <my_package>[tutorials]
+    pip install destvi-utils[tutorials]
 
 Nightly version - clone this repo and run::
 

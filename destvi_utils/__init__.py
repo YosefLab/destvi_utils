@@ -1,9 +1,10 @@
-"""scvi-tools-skeleton."""
+"""destvi_utils."""
+
 import logging
+
 from rich.console import Console
 from rich.logging import RichHandler
-
-from ._mymodule import 
+from ._mymodule import automatic_proportion_threshold
 
 try:
     import importlib.metadata as importlib_metadata
@@ -29,4 +30,4 @@ logger.addHandler(ch)
 # this prevents double outputs
 logger.propagate = False
 
-__all__ = ["MyModule"]
+__all__ = ["automatic_proportion_threshold"]
