@@ -18,11 +18,11 @@ from . import _utils
 
 
 def automatic_proportion_threshold(
-    st_adata, kind_threshold="primary", output_file="threshold.html", ct_list=None
+    st_adata, kind_threshold="primary", output_file=None, ct_list=None
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
-    For further reference check [Lopez22].
+    For further reference check [Lopez22]_.
 
     Parameters
     ----------
@@ -34,6 +34,7 @@ def automatic_proportion_threshold(
         'min_value' uses the minimum of primary and secondary threshold for each cell type.
     output_file
         File where html output is stored. None means displaying the results and not storing them.
+        Defaults to None.
     ct_list
         Celltypes to use. Defaults to all celltypes.
 
@@ -184,7 +185,7 @@ def explore_gamma_space(
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
-    For further reference check [Lopez22].
+    For further reference check [Lopez22]_.
 
     Parameters
     ----------
@@ -197,7 +198,8 @@ def explore_gamma_space(
     ct_threshold
         List with threshold values for cell type proportions
     output_file
-        File where html output is stored. If None displays the results and doesn't save. Defaults to None.
+        File where html output is stored. None means displaying the results and not storing them.
+        Defaults to None.
     ct_list
         Celltypes to use. Defaults to all celltypes.
 
@@ -345,7 +347,7 @@ def explore_gamma_space(
 def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=None):
     """
     Function to compute differential expressed genes from generative model.
-    For further reference check [Lopez22].
+    For further reference check [Lopez22]_.
 
     Parameters
     ----------
@@ -362,12 +364,15 @@ def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=N
     threshold
         Proportion threshold to subset to spots with this amount of cell type proportion
     key
-        Key to store values in st_adata.uns[key]. If none returns pandas dataframe with DE results
+        Key to store values in st_adata.uns[key]. If None returns pandas dataframe with DE results. Defaults to None
 
     Returns
     -------
     res
-        Pandas dataframe containing results of differential expression. Dataframe columns contain "log2FC", "pval", "score"
+        If key is None. Pandas dataframe containing results of differential expression.
+        Dataframe columns are "log2FC", "pval", "score".
+        If key is provided. mask, mask2 and de_results are stored in st_adata.uns[key]. Dictionary keys are
+        "mask_active", "mask_rest", "de_results".
 
     """
 
@@ -450,7 +455,7 @@ def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=N
 def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     """
     Function to plot results of differential expressed genes in a Volcano plot.
-    For further reference check [Lopez22].
+    For further reference check [Lopez22]_.
 
     Parameters
     ----------
@@ -459,7 +464,8 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     key
         Key under which results of DE comparison are stored
     output_file
-        File for saving the output of this function. If none displays the results inline.
+        File where picture is stored. None means displaying the results and not storing them.
+        Defaults to None.
     interesting_genes
         Label dots in scatter plots with corresponding gene name. Uses first two genes if None.
     """
