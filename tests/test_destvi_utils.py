@@ -38,7 +38,7 @@ def test_destvi():
             ).values(),
             dtype=float,
         )
-    )
+    ).any()
     assert not np.isnan(
         np.fromiter(
             destvi_utils.automatic_proportion_threshold(
@@ -46,12 +46,12 @@ def test_destvi():
             ).values(),
             dtype=float,
         )
-    )
+    ).any()
     destvi_utils.explore_gamma_space(spatial_model, sc_model)
     destvi_utils.de_genes(
         spatial_model, mask=dataset.obs["overclustering_vamp"] < 10, key="disease"
     )
-    assert not np.isnan(dataset.uns["disease"]["de_results"].values)
+    assert not np.isnan(dataset.uns["disease"]["de_results"].values).any()
     destvi_utils.plot_de_genes(
         dataset, key="disease", interesting_genes=dataset.var_names[0:2]
     )
