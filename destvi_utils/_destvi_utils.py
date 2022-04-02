@@ -324,12 +324,10 @@ def explore_gamma_space(
                     outdir="test",
                     no_plot=True,
                 )
-                print(enr)
                 html += f"<h5> {mode} </h5>"
                 html += "<p>" + ", ".join(gl) + "</p>"
                 text_signatures = enr.results.head(10)["Term"].values
-                print(text_signatures)
-                for i in range(10):
+                for i in range(len(text_signatures)):
                     if enr.results.iloc[i]["Adjusted P-value"] < 0.01:
                         text_signatures[i] += "*"
 
