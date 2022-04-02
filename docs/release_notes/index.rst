@@ -1,8 +1,8 @@
 Release notes
 =============
 
-This is the list of changes to destvi-utils between each release. Full commit history
-is available in the `commit logs <https://github.com/YosefLab/destvi-utils/commits/>`_.
+This is the list of changes to destvi_utils between each release. Full commit history
+is available in the `commit logs <https://github.com/YosefLab/destvi_utils/commits/>`_.
 
 Version 0.1
 -----------
