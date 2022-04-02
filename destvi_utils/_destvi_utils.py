@@ -260,7 +260,7 @@ def explore_gamma_space(
         plt.title("Projection of the spatial data")
 
         ax3 = plt.subplot(131)
-        _utils._prettify_axis(ax3, False, spatial=True)
+        _utils._prettify_axis(ax3, spatial=True)
         plt.scatter(
             st_adata.obsm["spatial"][:, 0],
             st_adata.obsm["spatial"][:, 1],
