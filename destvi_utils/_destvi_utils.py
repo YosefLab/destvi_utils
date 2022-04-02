@@ -27,7 +27,7 @@ def automatic_proportion_threshold(
     ----------
     st_adata
         Spatial sequencing dataset with proportions in obsm['proportions'] and spatial location in
-        obsm['location']
+        obsm['spatial']
     kind_threshold
         Which threshold value to use. Supported are 'primary', 'secondary'.
         'min_value' uses the minimum of primary and secondary threshold for each cell type.
@@ -46,9 +46,9 @@ def automatic_proportion_threshold(
         raise ValueError(
             'Please provide cell type proportions in st_adata.obsm["proportions"] and restart.'
         )
-    if "location" not in st_adata.obsm:
+    if "spatial" not in st_adata.obsm:
         raise ValueError(
-            'Please provide cell type locations in st_adata.obsm["location"] and restart.'
+            'Please provide cell type locations in st_adata.obsm["spatial"] and restart.'
         )
 
     if ct_list is None:
@@ -93,8 +93,8 @@ def automatic_proportion_threshold(
         def plot_proportions_xy(ax, threshold):
             _utils._prettify_axis(ax, False, spatial=True)
             plt.scatter(
-                st_adata.obsm["location"][:, 0],
-                st_adata.obsm["location"][:, 1],
+                st_adata.obsm["spatial"][:, 0],
+                st_adata.obsm["spatial"][:, 1],
                 c=array * (array.values > threshold),
                 s=14,
                 vmax=vmax,
@@ -212,9 +212,9 @@ def explore_gamma_space(
                 'Please provide cell type proportions in st_adata.obsm["proportions"] and restart.'
             )
 
-    if "location" not in st_adata.obsm:
+    if "spatial" not in st_adata.obsm:
         raise ValueError(
-            'Please provide cell type locations in st_adata.obsm["location"] and restart.'
+            'Please provide cell type locations in st_adata.obsm["spatial"] and restart.'
         )
 
     sc_adata = sc_model.adata
@@ -231,7 +231,7 @@ def explore_gamma_space(
 
     for name_ct in ct_list:
         filter_ = st_adata.obsm["proportions"][name_ct].values > ct_thresholds[name_ct]
-        locations = st_adata.obsm["location"][filter_]
+        locations = st_adata.obsm["spatial"][filter_]
         proportions = st_adata.obsm["proportions"][name_ct].values[filter_]
         ct_index = np.where(name_ct == st_model.cell_type_mapping)[0][0]
         data = gamma[:, :, ct_index][filter_]
@@ -261,15 +261,15 @@ def explore_gamma_space(
         ax3 = plt.subplot(131)
         _utils._prettify_axis(ax3, False, spatial=True)
         plt.scatter(
-            st_adata.obsm["location"][:, 0],
-            st_adata.obsm["location"][:, 1],
+            st_adata.obsm["spatial"][:, 0],
+            st_adata.obsm["spatial"][:, 1],
             alpha=0.1,
             s=7,
             c="blue",
         )
         plt.scatter(
-            st_adata.obsm["location"][filter_, 0],
-            st_adata.obsm["location"][filter_, 1],
+            st_adata.obsm["spatial"][filter_, 0],
+            st_adata.obsm["spatial"][filter_, 1],
             c=color,
             s=7,
         )
@@ -462,14 +462,14 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     """
     if "location" not in st_adata.obsm:
         raise ValueError(
-            'Please provide locations in st_adata.obsm["location"] and restart.'
+            'Please provide locations in st_adata.obsm["spatial"] and restart.'
         )
     if key not in st_adata.uns:
         raise ValueError(
             "DE results are not stored with given key. Please run de_genes function with given key."
         )
 
-    locations = st_adata.obsm["location"]
+    locations = st_adata.obsm["spatial"]
     res = st_adata.uns[key]["de_results"]
     mask_active = st_adata.uns[key]["mask_active"]
     mask_rest = st_adata.uns[key]["mask_rest"]
