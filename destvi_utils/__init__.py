@@ -4,10 +4,11 @@ import logging
 
 from rich.console import Console
 from rich.logging import RichHandler
+
 from ._destvi_utils import (
     automatic_proportion_threshold,
-    explore_gamma_space,
     de_genes,
+    explore_gamma_space,
     plot_de_genes,
 )
 

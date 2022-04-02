@@ -1,9 +1,9 @@
 # destVI utilities
 
-[![Stars](https://img.shields.io/github/stars/YosefLab/scvi-tools-skeleton?logo=GitHub&color=yellow)](https://github.com/YosefLab/scvi-tools/stargazers)
-[![Documentation Status](https://readthedocs.org/projects/scvi-tools-skeleton/badge/?version=latest)](https://scvi-tools-skeleton.readthedocs.io/en/stable/?badge=stable)
-![Build Status](https://github.com/YosefLab/scvi-tools-skeleton/workflows/scvi-tools-skeleton/badge.svg)
-[![codecov](https://codecov.io/gh/YosefLab/scvi-tools-skeleton/branch/main/graph/badge.svg?token=BGI9Z8R11R)](https://codecov.io/gh/YosefLab/scvi-tools-skeleton)
+[![Stars](https://img.shields.io/github/stars/YosefLab/destvi_utils?logo=GitHub&color=yellow)](https://github.com/YosefLab/destvi_utils/stargazers)
+[![Documentation Status](https://readthedocs.org/projects/destvi_utils/badge/?version=latest)](https://destvi_utils.readthedocs.io/en/stable/?badge=stable)
+![Build Status](https://github.com/YosefLab/destvi_utils/workflows/destvi_utils/badge.svg)
+[![codecov](https://codecov.io/gh/YosefLab/destvi_utils/branch/main/graph/badge.svg?token=BGI9Z8R11R)](https://codecov.io/gh/YosefLab/destvi_utils)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
-Utilities for downstream analysis of results after running destVI to generate similar figures as in the original publication, [scvi-tools](https://www.scvi-tools.org/en/stable/).
+Utilities for downstream analysis of results after running destVI to generate similar figures as in the original publication, [destVI](https://www.biorxiv.org/content/10.1101/2021.05.10.443517v1).

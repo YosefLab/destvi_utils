@@ -14,7 +14,6 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
 import destvi_utils  # noqa
 
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -80,11 +79,12 @@ intersphinx_mapping = dict(
     torch=("https://pytorch.org/docs/master/", None),
     scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
     pytorch_lightning=("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    scvi=("https://docs.scvi-tools.org/en/latest/", None),
 )
 
 
 # General information about the project.
-project = "destvi-utils"
+project = "destvi_utils"
 copyright = "2021, Yosef Lab, UC Berkeley"
 author = "Can Ergen"
 

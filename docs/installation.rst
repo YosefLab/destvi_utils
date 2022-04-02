@@ -4,7 +4,7 @@ Installation
 Prerequisites
 ~~~~~~~~~~~~~~
 
-my_package can be installed via PyPI.
+destvi_utils can be installed via PyPI.
 
 conda prerequisites
 ###################
@@ -13,11 +13,11 @@ conda prerequisites
 
 2. Create a new conda environment::
 
-    conda create -n scvi-env python=3.7
+    conda create -n destvi-env python=3.7
 
 3. Activate your environment::
 
-    source activate scvi-env
+    source activate destvi-env
 
 pip prerequisites:
 ##################
@@ -28,18 +28,14 @@ pip prerequisites:
 .. _Python: https://www.python.org/downloads/
 .. _PyTorch: http://pytorch.org
 
-destvi-utils installation
+destvi_utils installation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Install destvi-utils in one of the following ways:
+Install destvi_utils in one of the following ways:
 
 Through **pip**::
 
-    pip install destvi-utils
-
-Through pip with packages to run notebooks. This installs scanpy, etc.::
-
-    pip install destvi-utils[tutorials]
+    pip install destvi_utils
 
 Nightly version - clone this repo and run::
 
