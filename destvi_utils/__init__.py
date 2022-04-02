@@ -4,7 +4,7 @@ import logging
 
 from rich.console import Console
 from rich.logging import RichHandler
-from ._mymodule import automatic_proportion_threshold, explore_gamma_space, de_genes
+from ._destvi_utils import automatic_proportion_threshold, explore_gamma_space, de_genes, plot_de_genes
 
 try:
     import importlib.metadata as importlib_metadata
