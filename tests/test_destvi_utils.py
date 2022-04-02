@@ -32,14 +32,20 @@ def test_destvi():
         dataset.n_vars,
     )
     assert not np.isnan(
-        destvi_utils.automatic_proportion_threshold(
-            dataset, kind_threshold="primary"
-        ).values
+        np.fromiter(
+            destvi_utils.automatic_proportion_threshold(
+                dataset, kind_threshold="primary"
+            ).values(),
+            dtype=float,
+        )
     )
     assert not np.isnan(
-        destvi_utils.automatic_proportion_threshold(
-            dataset, kind_threshold="secondary"
-        ).values
+        np.fromiter(
+            destvi_utils.automatic_proportion_threshold(
+                dataset, kind_threshold="secondary"
+            ).values(),
+            dtype=float,
+        )
     )
     destvi_utils.explore_gamma_space(spatial_model, sc_model)
     destvi_utils.de_genes(
