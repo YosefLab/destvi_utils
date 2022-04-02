@@ -4,7 +4,12 @@ import logging
 
 from rich.console import Console
 from rich.logging import RichHandler
-from ._destvi_utils import automatic_proportion_threshold, explore_gamma_space, de_genes, plot_de_genes
+from ._destvi_utils import (
+    automatic_proportion_threshold,
+    explore_gamma_space,
+    de_genes,
+    plot_de_genes,
+)
 
 try:
     import importlib.metadata as importlib_metadata
@@ -30,4 +35,9 @@ logger.addHandler(ch)
 # this prevents double outputs
 logger.propagate = False
 
-__all__ = ["automatic_proportion_threshold", "explore_gamma_space", "de_genes"]
+__all__ = [
+    "automatic_proportion_threshold",
+    "explore_gamma_space",
+    "de_genes",
+    "plot_de_genes",
+]

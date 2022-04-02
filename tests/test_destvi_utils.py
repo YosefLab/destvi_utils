@@ -1,6 +1,7 @@
 import numpy as np
-from scvi.model import DestVI
 from scvi.data import synthetic_iid
+from scvi.model import CondSCVI, DestVI
+
 import destvi_utils
 
 
@@ -14,29 +15,36 @@ def test_destvi(save_path):
     CondSCVI.setup_anndata(dataset, labels_key="labels")
     sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers)
     sc_model.train(1, train_size=1)
-    
+
     DestVI.setup_anndata(dataset, layer=None)
     spatial_model = DestVI.from_rna_model(dataset, sc_model)
     spatial_model.train(max_epochs=1)
     assert not np.isnan(spatial_model.history["elbo_train"].values[0][0])
     assert spatial_model.get_proportions().shape == (dataset.n_obs, n_labels)
     assert spatial_model.get_gamma(return_numpy=True).shape == (
-            dataset.n_obs,
-            n_latent,
-            n_labels,
-        )
+        dataset.n_obs,
+        n_latent,
+        n_labels,
+    )
     assert spatial_model.get_scale_for_ct("label_0", np.arange(50)).shape == (
-            50,
-            dataset.n_vars,
-        )
-    assert not np.isnan(destvi_utils.automatic_proportion_threshold(
-        dataset, kind_threshold='primary').values())
-    assert not np.isnan(destvi_utils.automatic_proportion_threshold(
-        dataset, kind_threshold='secondary').values())
+        50,
+        dataset.n_vars,
+    )
+    assert not np.isnan(
+        destvi_utils.automatic_proportion_threshold(
+            dataset, kind_threshold="primary"
+        ).values()
+    )
+    assert not np.isnan(
+        destvi_utils.automatic_proportion_threshold(
+            dataset, kind_threshold="secondary"
+        ).values()
+    )
     destvi_utils.explore_gamma_space(spatial_model, sc_model)
     destvi_utils.de_genes(
-        st_model, mask=dataset.obs["overclustering_vamp"]<10, key='disease')
-    assert not np.isnan(dataset.uns['disease']['de_results'].values)
+        spatial_model, mask=dataset.obs["overclustering_vamp"] < 10, key="disease"
+    )
+    assert not np.isnan(dataset.uns["disease"]["de_results"].values)
     destvi_utils.plot_de_genes(
-        st_adata, key='disease', interesting_genes=st_adata.var_names[0:2])
-
+        dataset, key="disease", interesting_genes=dataset.var_names[0:2]
+    )
