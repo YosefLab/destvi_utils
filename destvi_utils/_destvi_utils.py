@@ -342,7 +342,7 @@ def explore_gamma_space(
         display(HTML(html))
 
 
-def de_genes(st_model, mask, ct, threshold, st_adata=None, mask2=None, key=None):
+def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=None):
     """
     Function to compute differential expressed genes from generative model.
     For further reference check [Lopez22].

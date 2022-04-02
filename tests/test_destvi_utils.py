@@ -48,8 +48,12 @@ def test_destvi():
         )
     ).any()
     destvi_utils.explore_gamma_space(spatial_model, sc_model)
+    ct = dataset.obsm["proportions"].columns()[0]
     destvi_utils.de_genes(
-        spatial_model, mask=dataset.obs["overclustering_vamp"] < 10, key="disease"
+        spatial_model,
+        mask=dataset.obs["overclustering_vamp"] < 10,
+        key="disease",
+        ct=ct,
     )
     assert not np.isnan(dataset.uns["disease"]["de_results"].values).any()
     destvi_utils.plot_de_genes(
