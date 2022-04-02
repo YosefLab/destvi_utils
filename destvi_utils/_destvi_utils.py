@@ -10,6 +10,7 @@ import pandas as pd
 import torch
 from adjustText import adjust_text
 from IPython.core.display import HTML, display
+from scipy.sparse import issparse
 from scipy.stats import ks_2samp
 from statsmodels.stats.multitest import multipletests
 
@@ -279,7 +280,9 @@ def explore_gamma_space(
         sc_adata_slice = sc_adata[
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         ].copy()
-        normalized_counts = sc_adata_slice.X.A
+        is_sparse = issparse(sc_adata_slice.X)
+        normalized_counts = sc_adata_slice.X.A if is_sparse else sc_adata_slice.X
+
         sc_latent = sc_model.get_latent_representation(sc_adata_slice)
         sc_projection = np.dot(sc_latent - np.mean(sc_latent, 0), vec)
 
