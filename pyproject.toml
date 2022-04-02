@@ -36,7 +36,7 @@ cmap2d = {git = "https://github.com/cane11/cmap2d", tag = "v1.0"}
 codecov = {version = ">=2.0.8", optional = true}
 flake8 = {version = ">=3.7.7", optional = true}
 gseapy = {version = "0.10.2"}
-hotspot = {git = "https://github.com/YosefLab/Hotspot", tag = "v1.0.0"}
+hotspot = {git = "https://github.com/YosefLab/Hotspot", tag = "v1.0"}
 importlib-metadata = {version = "^1.0", python = "<3.8"}
 ipython = ">=7.1.1"
 isort = {version = ">=5.7", optional = true}
