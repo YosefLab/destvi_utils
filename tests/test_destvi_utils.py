@@ -11,7 +11,7 @@ def test_destvi():
     n_labels = 5
     n_layers = 2
     dataset = synthetic_iid(n_labels=n_labels)
-    dataset.obsm["spatial"] = np.random.randn(shape=[dataset.n_obs, 2])
+    dataset.obsm["spatial"] = np.random.randn(dataset.n_obs, 2)
     dataset.obs["overclustering_vamp"] = list(range(dataset.n_obs))
     CondSCVI.setup_anndata(dataset, labels_key="labels")
     sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers)
