@@ -52,7 +52,7 @@ def _get_autocorrelations(st_adata, stacked_quantiles, quantiles):
     adata = ad.AnnData(stacked_quantiles.T)
     adata.obs_names = st_adata.obs.index
     adata.var_names = [str(i) for i in quantiles]
-    adata.obsm["spatial"] = st_adata.obsm["location"]
+    adata.obsm["spatial"] = st_adata.obsm["spatial"]
     hs = hotspot.Hotspot(adata, model="none", latent_obsm_key="spatial")
     hs.create_knn_graph(
         weighted_graph=True,
