@@ -11,7 +11,7 @@ def test_destvi():
     n_labels = 5
     n_layers = 2
     dataset = synthetic_iid(n_labels=n_labels)
-    dataset.obsm['spatial'] = np.zeros(shape=[dataset.n_obs, 2])
+    dataset.obsm["spatial"] = np.zeros(shape=[dataset.n_obs, 2])
     dataset.obs["overclustering_vamp"] = list(range(dataset.n_obs))
     CondSCVI.setup_anndata(dataset, labels_key="labels")
     sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers)
@@ -21,7 +21,7 @@ def test_destvi():
     spatial_model = DestVI.from_rna_model(dataset, sc_model)
     spatial_model.train(max_epochs=1)
     assert not np.isnan(spatial_model.history["elbo_train"].values[0][0])
-    dataset.obsm['proportions'] = spatial_model.get_proportions()
+    dataset.obsm["proportions"] = spatial_model.get_proportions()
     assert spatial_model.get_gamma(return_numpy=True).shape == (
         dataset.n_obs,
         n_latent,
