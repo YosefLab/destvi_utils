@@ -5,7 +5,7 @@ from scvi.model import CondSCVI, DestVI
 import destvi_utils
 
 
-def test_destvi(save_path):
+def test_destvi():
     # Step1 learn CondSCVI
     n_latent = 2
     n_labels = 5
