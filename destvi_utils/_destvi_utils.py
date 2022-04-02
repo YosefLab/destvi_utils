@@ -92,7 +92,7 @@ def automatic_proportion_threshold(
 
         # PLOT 1 shows proportions in spatial dimensions without thresholding
         def plot_proportions_xy(ax, threshold):
-            _utils._prettify_axis(ax, False, spatial=True)
+            _utils._prettify_axis(ax, spatial=True)
             plt.scatter(
                 st_adata.obsm["spatial"][:, 0],
                 st_adata.obsm["spatial"][:, 1],
