@@ -463,7 +463,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     interesting_genes
         Label dots in scatter plots with corresponding gene name. Uses first two genes if None.
     """
-    if "location" not in st_adata.obsm:
+    if "spatial" not in st_adata.obsm:
         raise ValueError(
             'Please provide locations in st_adata.obsm["spatial"] and restart.'
         )
