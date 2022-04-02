@@ -20,7 +20,7 @@ def test_destvi():
     spatial_model = DestVI.from_rna_model(dataset, sc_model)
     spatial_model.train(max_epochs=1)
     assert not np.isnan(spatial_model.history["elbo_train"].values[0][0])
-    assert spatial_model.get_proportions().shape == (dataset.n_obs, n_labels)
+    dataset.obsm['proportions'] = spatial_model.get_proportions()
     assert spatial_model.get_gamma(return_numpy=True).shape == (
         dataset.n_obs,
         n_latent,
@@ -33,12 +33,12 @@ def test_destvi():
     assert not np.isnan(
         destvi_utils.automatic_proportion_threshold(
             dataset, kind_threshold="primary"
-        ).values()
+        ).values
     )
     assert not np.isnan(
         destvi_utils.automatic_proportion_threshold(
             dataset, kind_threshold="secondary"
-        ).values()
+        ).values
     )
     destvi_utils.explore_gamma_space(spatial_model, sc_model)
     destvi_utils.de_genes(
