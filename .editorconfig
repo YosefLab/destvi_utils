@@ -1,21 +1,32 @@
-# http://editorconfig.org
+"""scvi-tools-skeleton."""
+import logging
+from rich.console import Console
+from rich.logging import RichHandler
 
-root = true
+from ._destvi_utils import 
 
-[*]
-indent_style = space
-indent_size = 4
-trim_trailing_whitespace = true
-insert_final_newline = true
-charset = utf-8
-end_of_line = lf
+try:
+    import importlib.metadata as importlib_metadata
+except ModuleNotFoundError:
+    import importlib_metadata
 
-[*.bat]
-indent_style = tab
-end_of_line = crlf
+package_name = "destvi_utils"
+__version__ = importlib_metadata.version(destvi_utils)
 
-[LICENSE]
-insert_final_newline = false
+logger = logging.getLogger(__name__)
+# set the logging level
+logger.setLevel(logging.INFO)
 
-[Makefile]
-indent_style = tab
+# nice logging outputs
+console = Console(force_terminal=True)
+if console.is_jupyter is True:
+    console.is_jupyter = False
+ch = RichHandler(show_path=False, console=console, show_time=False)
+formatter = logging.Formatter("destvi_utils: %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+# this prevents double outputs
+logger.propagate = False
+
+__all__ = ["destvi_utils"]
