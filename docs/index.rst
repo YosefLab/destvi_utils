@@ -1,8 +1,8 @@
 ========================
-destvi-utils documentation
+destvi_utils documentation
 ========================
 
-Welcome! This is the corresponding documentation website for the `destvi-utils <https://github.com/YosefLab/destvi-utils>`_ package.
+Welcome! This is the corresponding documentation website for the `destvi_utils <https://github.com/YosefLab/destvi_utils>`_ package.
 
 
 .. toctree::

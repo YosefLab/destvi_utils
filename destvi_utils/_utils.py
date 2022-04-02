@@ -7,21 +7,13 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.mixture import GaussianMixture
 
 
-def _prettify_axis(ax, all_=False, spatial=False):
-    if not all_:
-        # Hide the right and top spines
-        ax.spines["right"].set_visible(False)
-        ax.spines["top"].set_visible(False)
-        # Only show ticks on the left and bottom spines
-        ax.yaxis.set_ticks_position("left")
-        ax.xaxis.set_ticks_position("bottom")
-    else:
-        ax.xaxis.set_visible(False)
-        ax.yaxis.set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.spines["left"].set_visible(False)
-        ax.spines["bottom"].set_visible(False)
-        ax.spines["top"].set_visible(False)
+def _prettify_axis(ax, spatial=False):
+    # Hide the right and top spines
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    # Only show ticks on the left and bottom spines
+    ax.yaxis.set_ticks_position("left")
+    ax.xaxis.set_ticks_position("bottom")
     if spatial:
         plt.xticks([])
         plt.yticks([])
