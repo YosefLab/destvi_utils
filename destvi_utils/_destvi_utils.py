@@ -61,7 +61,9 @@ def automatic_proportion_threshold(
 
     for name_ct in ct_list:
         fig = plt.figure(figsize=(20, 5))
-        fig.suptitle(name_ct + ": critical points", fontsize='large', fontweight='semibold')
+        fig.suptitle(
+            name_ct + ": critical points", fontsize="large", fontweight="semibold"
+        )
 
         array = st_adata.obsm["proportions"][name_ct]
         vmax = np.quantile(array.values, 0.99)
@@ -249,7 +251,7 @@ def explore_gamma_space(
         color = np.vstack([cmap(projection[i]) for i in range(projection.shape[0])])
 
         fig = plt.figure(figsize=(15, 5))
-        fig.suptitle(name_ct, fontsize='large', fontweight='semibold')
+        fig.suptitle(name_ct, fontsize="large", fontweight="semibold")
         ax1 = plt.subplot(132)
         _utils._prettify_axis(ax1)
         plt.scatter(projection[:, 0], projection[:, 1], c=color, marker="X")
