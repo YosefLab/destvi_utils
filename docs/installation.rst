@@ -35,7 +35,7 @@ Install destvi_utils in one of the following ways:
 
 Through **pip**::
 
-    pip install destvi_utils
+    pip install git+https://github.com/yoseflab/destvi_utils.git@v0.1.0
 
 Nightly version - clone this repo and run::
 
