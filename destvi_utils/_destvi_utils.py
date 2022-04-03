@@ -60,7 +60,7 @@ def automatic_proportion_threshold(
     html = "<h2>Automatic thresholding</h2>"
 
     for name_ct in ct_list:
-        fig = plt.figure(figsize=(12, 3))
+        fig = plt.figure(figsize=(20, 5))
         fig.suptitle(name_ct + ": critical points")
 
         array = st_adata.obsm["proportions"][name_ct]
@@ -248,7 +248,7 @@ def explore_gamma_space(
         # apply colormap to spatial data
         color = np.vstack([cmap(projection[i]) for i in range(projection.shape[0])])
 
-        fig = plt.figure(figsize=(9, 3))
+        fig = plt.figure(figsize=(15, 5))
         fig.suptitle(name_ct)
         fig.tight_layout(rect=[0, 0.1, 1, 0.2])
         ax1 = plt.subplot(132)
@@ -485,7 +485,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
 
     corr_p_vals = multipletests(res["pval"], method="fdr_bh")
     min_score = np.min(res["score"][corr_p_vals[0]])
-    plt.figure(figsize=(6, 3))
+    plt.figure(figsize=(10, 5))
 
     # plot DE genes
     ax1 = plt.subplot(122)
