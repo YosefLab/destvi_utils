@@ -61,7 +61,7 @@ def automatic_proportion_threshold(
 
     for name_ct in ct_list:
         fig = plt.figure(figsize=(20, 5))
-        fig.suptitle(name_ct + ": critical points")
+        fig.suptitle(name_ct + ": critical points", fontsize='large', fontweight='semibold')
 
         array = st_adata.obsm["proportions"][name_ct]
         vmax = np.quantile(array.values, 0.99)
@@ -102,7 +102,7 @@ def automatic_proportion_threshold(
                 vmax=vmax,
             )
             plt.title("name_ct, threshold: t={:0.3f}".format(threshold))
-            plt.tight_layout()
+            plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
             return ax
 
@@ -249,8 +249,7 @@ def explore_gamma_space(
         color = np.vstack([cmap(projection[i]) for i in range(projection.shape[0])])
 
         fig = plt.figure(figsize=(15, 5))
-        fig.suptitle(name_ct)
-        fig.tight_layout(rect=[0, 0.1, 1, 0.2])
+        fig.suptitle(name_ct, fontsize='large', fontweight='semibold')
         ax1 = plt.subplot(132)
         _utils._prettify_axis(ax1)
         plt.scatter(projection[:, 0], projection[:, 1], c=color, marker="X")
@@ -301,7 +300,7 @@ def explore_gamma_space(
         plt.xlabel("SpatialPC1 ({:.1f}% explained var)".format(explained_var[0]))
         plt.ylabel("SpatialPC2 ({:.1f}% explained var)".format(explained_var[1]))
         plt.title("Projection of the scRNA-seq data")
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
         # DUMP TO HTML
         tmpfile = BytesIO()
