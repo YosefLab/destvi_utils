@@ -7,3 +7,16 @@
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
 Utilities for downstream analysis of results after running destVI to generate similar figures as in the original publication, [destVI](https://www.biorxiv.org/content/10.1101/2021.05.10.443517v1).
+
+# Basic installation
+
+pip install git+https://github.com/yoseflab/destvi_utils.git
+```
+Please be sure to install a version of [PyTorch](https://pytorch.org/) that is compatible with your GPU (if applicable).
+
+
+# Resources
+
+-   Tutorials, API reference, and installation guides are available in
+    the [documentation](https://destvi-utils.readthedocs.io/en/latest/).
+-   Please use the [issues](https://github.com/yoseflab/destvi_utils_/issues) to submit bug reports.
