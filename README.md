@@ -18,6 +18,6 @@ Please be sure to install a version of [PyTorch](https://pytorch.org/) that is c
 
 # Resources
 
--   Tutorials, API reference, and installation guides are available in
+-   API reference, and installation guides are available in
     the [documentation](https://destvi-utils.readthedocs.io/en/latest/).
 -   Please use the [issues](https://github.com/yoseflab/destvi_utils_/issues) to submit bug reports.
