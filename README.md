@@ -10,6 +10,7 @@ Utilities for downstream analysis of results after running destVI to generate si
 
 # Basic installation
 
+```
 pip install git+https://github.com/yoseflab/destvi_utils.git
 ```
 Please be sure to install a version of [PyTorch](https://pytorch.org/) that is compatible with your GPU (if applicable).
