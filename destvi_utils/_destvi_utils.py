@@ -317,7 +317,7 @@ def explore_gamma_space(
         with open(output_file, "w") as f:
             f.write(html)
     else:
-        display(HTML(html))
+        display(HTML(html, width="70%"))
 
 
 def de_genes(
@@ -457,9 +457,9 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
         raise ValueError(
             "DE results are not stored with given key. Please run de_genes function with given key."
         )
-    matching_genes = [i in st_adata.var_names for i in interesting_genes]
+    matching_genes = np.array([i in st_adata.var_names for i in interesting_genes])
     if not matching_genes.all():
-        missing_genes = interesting_genes[~matching_genes]
+        missing_genes = np.array(interesting_genes)[~matching_genes]
         raise ValueError(
             "{} are not in st_adata.var_names. Remove these genes from interesting_genes.".format(
                 missing_genes
