@@ -102,46 +102,21 @@ def automatic_proportion_threshold(
                 c=array * (array.values > threshold),
                 s=14,
                 vmax=vmax,
+                cmap="Reds",
             )
+            plt.colorbar()
             plt.title("name_ct, threshold: t={:0.3f}".format(threshold))
             plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
             return ax
 
-        ax1 = plt.subplot(141)
+        ax1 = plt.subplot(131)
+        _utils._prettify_axis(ax1)
         ax1 = plot_proportions_xy(ax1, 0)
 
-        # plot characteristic plots
-        def characteristic_plot(ax):
-            ymax = np.max(z_values)
-            _utils._prettify_axis(ax)
-            plt.plot(index, z_values, label="noisy data")
-            plt.plot(index, smoothed, label="fitted")
-            plt.plot(index, ymax * sign_2nd, label="sign 2st derivative")
-            # identify points
-            plt.vlines(
-                ipoints,
-                ymin=0,
-                ymax=np.max(z_values),
-                color="red",
-                linestyle="--",
-                label="secondary thresholds",
-            )
-            # nominal mapping
-            plt.axvline(nom_map, c="red", label="main threshold")
-            plt.ylabel("Autocorrelation")
-            plt.xlabel("proportions value")
-            plt.title("Autocorrelation study")
-            plt.legend()
-
-            return ax
-
-        ax2 = plt.subplot(142)
-        ax2 = characteristic_plot(ax2)
-
         # plot on top of histogram
-        ax3 = plt.subplot(143)
-        _utils._prettify_axis(ax3)
+        ax2 = plt.subplot(132)
+        _utils._prettify_axis(ax2)
         n, _, _ = plt.hist(array.values)
         plt.vlines(
             ipoints,
@@ -157,8 +132,8 @@ def automatic_proportion_threshold(
         plt.title("Cell type frequency histogram")
         plt.legend()
 
-        ax4 = plt.subplot(144)
-        ax4 = plot_proportions_xy(ax4, ct_thresholds[name_ct])
+        ax3 = plt.subplot(133)
+        ax3 = plot_proportions_xy(ax3, ct_thresholds[name_ct])
 
         if output_file is not None:
             tmpfile = BytesIO()
@@ -345,7 +320,9 @@ def explore_gamma_space(
         display(HTML(html))
 
 
-def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=None):
+def de_genes(
+    st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=None, N_sample=10
+):
     """
     Function to compute differential expressed genes from generative model.
     For further reference check [Lopez22]_.
@@ -366,6 +343,8 @@ def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=N
         Proportion threshold to subset to spots with this amount of cell type proportion
     key
         Key to store values in st_adata.uns[key]. If None returns pandas dataframe with DE results. Defaults to None
+    N_sample
+        N_samples drawn from generative model to simulate expression values.
 
     Returns
     -------
@@ -407,7 +386,7 @@ def de_genes(st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=N
     rate = torch.tensor(1.0 / exp_px_o)
 
     # slice conditions
-    N_mask, N_unmask = (10, 10)
+    N_mask = N_unmask = N_sample
 
     def simulation(mask_, N_mask_):
         # generate
@@ -477,6 +456,14 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     if key not in st_adata.uns:
         raise ValueError(
             "DE results are not stored with given key. Please run de_genes function with given key."
+        )
+    matching_genes = [i in st_adata.var_names for i in interesting_genes]
+    if not matching_genes.all():
+        missing_genes = interesting_genes[~matching_genes]
+        raise ValueError(
+            "{} are not in st_adata.var_names. Remove these genes from interesting_genes.".format(
+                missing_genes
+            )
         )
 
     locations = st_adata.obsm["spatial"]
