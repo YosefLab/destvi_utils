@@ -60,9 +60,9 @@ def automatic_proportion_threshold(
     html = "<h2>Automatic thresholding</h2>"
 
     for name_ct in ct_list:
-        fig = plt.figure(figsize=(20, 5))
+        fig = plt.figure(figsize=(15, 5))
         fig.suptitle(
-            name_ct + ": critical points", fontsize="large", fontweight="semibold"
+            name_ct + ": critical points", fontsize="x-large", fontweight="semibold"
         )
 
         array = st_adata.obsm["proportions"][name_ct]
@@ -226,7 +226,7 @@ def explore_gamma_space(
         color = np.vstack([cmap(projection[i]) for i in range(projection.shape[0])])
 
         fig = plt.figure(figsize=(15, 5))
-        fig.suptitle(name_ct, fontsize="large", fontweight="semibold")
+        fig.suptitle(name_ct, fontsize="x-large", fontweight="semibold")
         ax1 = plt.subplot(132)
         _utils._prettify_axis(ax1)
         plt.scatter(projection[:, 0], projection[:, 1], c=color, marker="X")
@@ -317,7 +317,7 @@ def explore_gamma_space(
         with open(output_file, "w") as f:
             f.write(html)
     else:
-        display(HTML(html, width="70%"))
+        display(HTML(html))
 
 
 def de_genes(
