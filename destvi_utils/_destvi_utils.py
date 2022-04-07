@@ -289,19 +289,15 @@ def explore_gamma_space(
         plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
         # DUMP TO HTML
-        if output_file is not None:
-            tmpfile = BytesIO()
-            plt.savefig(tmpfile, format="png")
-            encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-            html += "<img src='data:image/png;base64,{}'>".format(encoded)
+        tmpfile = BytesIO()
+        plt.savefig(tmpfile, dpi="figure", format="png")
+        encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
+        html += "<img src='data:image/png;base64,{}'>".format(encoded)
 
         # calculate correlations, and for each axis:
         # (A) display top 50 genes + AND - (B) for each gene set, get GSEA
         for d in [0, 1]:
-            if output_file is not None:
-                html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
-            else:
-                print("Genes associated with SpatialPC", d + 1)
+            html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
             for mode in ["Positively", "Negatively"]:
                 ranking = np.argsort(r)
@@ -319,17 +315,10 @@ def explore_gamma_space(
                 for i in range(len(text_signatures)):
                     if enr.results.iloc[i]["Adjusted P-value"] < 0.01:
                         text_signatures[i] += "*"
-                signatures = ", ".join(text_signatures)
-                genes = ", ".join(gl)
+                html += f"<h5> {mode} </h5>"
+                html += "<p>" + ", ".join(gl) + "</p>"
+                html += "<p>" + ", ".join(text_signatures) + "</p>"
 
-                if output_file is not None:
-                    html += f"<h5> {mode} </h5>"
-                    html += "<p>" + genes + "</p>"
-                    html += "<p>" + signatures + "</p>"
-                else:
-                    print(mode)
-                    print(genes)
-                    print(signatures)
         plt.close(fig)
 
     # write HTML
