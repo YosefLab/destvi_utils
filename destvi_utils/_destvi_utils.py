@@ -147,7 +147,7 @@ def automatic_proportion_threshold(
 
     # dump+write to HTML
     if output_file is not None:
-        logging.info(
+        logging.warning(
             "Saving output to {}. Set output_file=None to display results.".format(
                 output_file
             )
@@ -323,7 +323,7 @@ def explore_gamma_space(
 
     # write HTML
     if output_file is not None:
-        logging.info(
+        logging.warning(
             "Saving output to {}. Set output_file=None to display results.".format(
                 output_file
             )
@@ -545,7 +545,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
 
     plt.tight_layout()
     if output_file is not None:
-        logging.info(
+        logging.warning(
             "Saving output to {}. Set output_file=None to display results.".format(
                 output_file
             )
