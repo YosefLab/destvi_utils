@@ -268,7 +268,7 @@ def explore_gamma_space(
         normalized_counts = sc_adata_slice.X.A if is_sparse else sc_adata_slice.X
         indices_ct = np.where(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
-        )
+        )[0]
 
         sc_latent = sc_model.get_latent_representation(indices=indices_ct)
         sc_projection = np.dot(sc_latent - np.mean(sc_latent, 0), vec)
