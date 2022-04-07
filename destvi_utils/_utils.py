@@ -91,7 +91,14 @@ def _vcorrcoef(X, y):
     ym = np.mean(y)
     r_num = np.sum((X - Xm) * (y - ym), axis=1)
     r_den = np.sqrt(np.sum((X - Xm) ** 2, axis=1) * np.sum((y - ym) ** 2))
-    r = r_num / r_den
+    r = np.divide(
+        r_num,
+        r_den,
+        out=np.zeros_like(
+            r_num,
+        ),
+        where=r_den != 0,
+    )
     return r
 
 

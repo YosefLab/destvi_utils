@@ -1,4 +1,5 @@
 import base64
+import logging
 from argparse import ArgumentError
 from io import BytesIO
 
@@ -146,6 +147,11 @@ def automatic_proportion_threshold(
 
     # dump+write to HTML
     if output_file is not None:
+        logging.info(
+            "Saving output to {}. Set output_file=None to display results.".format(
+                output_file
+            )
+        )
         with open(output_file, "w") as f:
             f.write(html)
 
@@ -260,8 +266,11 @@ def explore_gamma_space(
         ].copy()
         is_sparse = issparse(sc_adata_slice.X)
         normalized_counts = sc_adata_slice.X.A if is_sparse else sc_adata_slice.X
+        indices_ct = np.where(
+            sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
+        )
 
-        sc_latent = sc_model.get_latent_representation(sc_adata_slice)
+        sc_latent = sc_model.get_latent_representation(indices=indices_ct)
         sc_projection = np.dot(sc_latent - np.mean(sc_latent, 0), vec)
 
         # show the colormap for single-cell data
@@ -280,15 +289,19 @@ def explore_gamma_space(
         plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
         # DUMP TO HTML
-        tmpfile = BytesIO()
-        plt.savefig(tmpfile, format="png")
-        encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-        html += "<img src='data:image/png;base64,{}'>".format(encoded)
+        if output_file is not None:
+            tmpfile = BytesIO()
+            plt.savefig(tmpfile, format="png")
+            encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
+            html += "<img src='data:image/png;base64,{}'>".format(encoded)
 
         # calculate correlations, and for each axis:
         # (A) display top 50 genes + AND - (B) for each gene set, get GSEA
         for d in [0, 1]:
-            html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+            if output_file is not None:
+                html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+            else:
+                print("Genes associated with SpatialPC", d + 1)
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
             for mode in ["Positively", "Negatively"]:
                 ranking = np.argsort(r)
@@ -302,18 +315,30 @@ def explore_gamma_space(
                     outdir="test",
                     no_plot=True,
                 )
-                html += f"<h5> {mode} </h5>"
-                html += "<p>" + ", ".join(gl) + "</p>"
                 text_signatures = enr.results.head(10)["Term"].values
                 for i in range(len(text_signatures)):
                     if enr.results.iloc[i]["Adjusted P-value"] < 0.01:
                         text_signatures[i] += "*"
+                signatures = ", ".join(text_signatures)
+                genes = ", ".join(gl)
 
-                html += "<p>" + ", ".join(text_signatures) + "</p>"
+                if output_file is not None:
+                    html += f"<h5> {mode} </h5>"
+                    html += "<p>" + genes + "</p>"
+                    html += "<p>" + signatures + "</p>"
+                else:
+                    print(mode)
+                    print(genes)
+                    print(signatures)
         plt.close(fig)
 
     # write HTML
     if output_file is not None:
+        logging.info(
+            "Saving output to {}. Set output_file=None to display results.".format(
+                output_file
+            )
+        )
         with open(output_file, "w") as f:
             f.write(html)
     else:
@@ -531,6 +556,11 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
 
     plt.tight_layout()
     if output_file is not None:
+        logging.info(
+            "Saving output to {}. Set output_file=None to display results.".format(
+                output_file
+            )
+        )
         plt.savefig(output_file, dpi=300)
         plt.close()
     else:
