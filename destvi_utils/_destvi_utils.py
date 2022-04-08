@@ -335,7 +335,15 @@ def explore_gamma_space(
 
 
 def de_genes(
-    st_model, mask, ct, threshold=0.0, st_adata=None, mask2=None, key=None, N_sample=10
+    st_model,
+    mask,
+    ct,
+    threshold=0.0,
+    st_adata=None,
+    mask2=None,
+    key=None,
+    N_sample=10,
+    pseudocount=1,
 ):
     """
     Function to compute differential expressed genes from generative model.
@@ -359,6 +367,8 @@ def de_genes(
         Key to store values in st_adata.uns[key]. If None returns pandas dataframe with DE results. Defaults to None
     N_sample
         N_samples drawn from generative model to simulate expression values.
+    pseudocount
+        Pseudocount added at computation of logFC and pvalues. Increasing leads to lower significance of lowly expressed genes.
 
     Returns
     -------
@@ -394,7 +404,7 @@ def de_genes(
     avg_library_size = np.mean(np.sum(expression, axis=1).flatten())
     exp_px_o = st_model.module.px_o.detach().exp().cpu().numpy()
     imputations = st_model.get_scale_for_ct(ct).values
-    mean = imputations
+    mean = avg_library_size * imputations
 
     concentration = torch.tensor(avg_library_size * imputations / exp_px_o)
     rate = torch.tensor(1.0 / exp_px_o)
@@ -410,7 +420,7 @@ def de_genes(
             .cpu()
             .numpy()
         )
-        simulated = np.log(simulated + 1)
+        simulated = np.log(simulated + pseudocount)
         simulated = simulated.reshape((-1, simulated.shape[-1]))
         return simulated
 
@@ -428,7 +438,9 @@ def de_genes(
             for gene in range(simulated_control.shape[1])
         ]
     )
-    lfc = np.log2(mean[mask].mean(0)) - np.log2(mean[mask2].mean(0))
+    lfc = np.log2(pseudocount + mean[mask].mean(0)) - np.log2(
+        pseudocount + mean[mask2].mean(0)
+    )
     res = pd.DataFrame(
         data=np.vstack([lfc, de[:, 0], de[:, 1]]),
         columns=st_adata.var.index,
