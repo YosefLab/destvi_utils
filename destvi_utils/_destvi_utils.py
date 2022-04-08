@@ -98,8 +98,8 @@ def automatic_proportion_threshold(
         def plot_proportions_xy(ax, threshold):
             _utils._prettify_axis(ax, spatial=True)
             plt.scatter(
-                st_adata.obsm["spatial"][:, 1],
                 st_adata.obsm["spatial"][:, 0],
+                st_adata.obsm["spatial"][:, 1],
                 c=array * (array.values > threshold),
                 s=14,
                 vmax=vmax,
@@ -246,15 +246,15 @@ def explore_gamma_space(
         ax3 = plt.subplot(131)
         _utils._prettify_axis(ax3, spatial=True)
         plt.scatter(
-            st_adata.obsm["spatial"][:, 1],
             st_adata.obsm["spatial"][:, 0],
+            st_adata.obsm["spatial"][:, 1],
             alpha=0.1,
             s=7,
             c="blue",
         )
         plt.scatter(
-            st_adata.obsm["spatial"][filter_, 1],
             st_adata.obsm["spatial"][filter_, 0],
+            st_adata.obsm["spatial"][filter_, 1],
             c=color,
             s=7,
         )
@@ -535,10 +535,10 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
         ha="right",
     )
     ax2.scatter(
-        locations[mask_active][:, 1], locations[mask_active][:, 0], s=5, label="active"
+        locations[mask_active][:, 0], locations[mask_active][:, 1], s=5, label="active"
     )
     ax2.scatter(
-        locations[mask_rest][:, 1], locations[mask_rest][:, 0], s=5, label="rest"
+        locations[mask_rest][:, 0], locations[mask_rest][:, 1], s=5, label="rest"
     )
     plt.legend()
     _utils._prettify_axis(ax2, spatial=True)
