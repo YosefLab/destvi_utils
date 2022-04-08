@@ -343,7 +343,7 @@ def de_genes(
     mask2=None,
     key=None,
     N_sample=10,
-    pseudocount=1,
+    pseudocount=0.01,
 ):
     """
     Function to compute differential expressed genes from generative model.
@@ -368,7 +368,7 @@ def de_genes(
     N_sample
         N_samples drawn from generative model to simulate expression values.
     pseudocount
-        Pseudocount added at computation of logFC and pvalues. Increasing leads to lower significance of lowly expressed genes.
+        Pseudocount added at computation of logFC. Increasing leads to lower logFC of lowly expressed genes.
 
     Returns
     -------
@@ -420,7 +420,7 @@ def de_genes(
             .cpu()
             .numpy()
         )
-        simulated = np.log(simulated + pseudocount)
+        simulated = np.log(simulated + 1)
         simulated = simulated.reshape((-1, simulated.shape[-1]))
         return simulated
 
