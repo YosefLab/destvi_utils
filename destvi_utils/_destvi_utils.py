@@ -189,8 +189,6 @@ def explore_gamma_space(
     """
     if output_file is not None:
         html = "<h1>sPCA analysis</h1>"
-    else:
-        print("[bold]sPCA analysis[/bold]")
 
     if st_adata is None:
         st_adata = st_model.adata
@@ -306,7 +304,7 @@ def explore_gamma_space(
             if output_file is not None:
                 html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
             else:
-                print("[uu]Genes associated with SpatialPC{}[/uu]".format(d + 1))
+                print("[bold]Genes associated with SpatialPC{}[/bold]".format(d + 1))
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
             for mode in ["Positively", "Negatively"]:
                 ranking = np.argsort(r)
@@ -330,8 +328,15 @@ def explore_gamma_space(
                     html += "<p>" + ", ".join(text_signatures) + "</p>"
                 else:
                     print("[italic]{}[/italic]".format(mode))
+                    print(
+                        "---------------------------------------------------------------------------------------"
+                    )
                     print(", ".join(gl))
+                    print(
+                        "---------------------------------------------------------------------------------------"
+                    )
                     print(", ".join(text_signatures))
+                    print("\n")
 
         plt.close(fig)
 
