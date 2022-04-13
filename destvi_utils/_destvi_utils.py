@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import torch
 from adjustText import adjust_text
-from IPython.core.display import HTML, display
+from rich import print
 from scipy.sparse import issparse
 from scipy.stats import ks_2samp
 from statsmodels.stats.multitest import multipletests
@@ -187,7 +187,10 @@ def explore_gamma_space(
         Celltypes to use. Defaults to all celltypes.
 
     """
-    html = "<h1>sPCA analysis</h1>"
+    if output_file is not None:
+        html = "<h1>sPCA analysis</h1>"
+    else:
+        print("[bold]sPCA analysis[/bold]")
 
     if st_adata is None:
         st_adata = st_model.adata
@@ -292,12 +295,18 @@ def explore_gamma_space(
         tmpfile = BytesIO()
         plt.savefig(tmpfile, dpi="figure", format="png")
         encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-        html += "<img src='data:image/png;base64,{}'>".format(encoded)
+        if output_file is not None:
+            html += "<img src='data:image/png;base64,{}'>".format(encoded)
+        else:
+            plt.show()
 
         # calculate correlations, and for each axis:
         # (A) display top 50 genes + AND - (B) for each gene set, get GSEA
         for d in [0, 1]:
-            html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+            if output_file is not None:
+                html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+            else:
+                print("[uu]Genes associated with SpatialPC{}[/uu]".format(d + 1))
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
             for mode in ["Positively", "Negatively"]:
                 ranking = np.argsort(r)
@@ -315,9 +324,14 @@ def explore_gamma_space(
                 for i in range(len(text_signatures)):
                     if enr.results.iloc[i]["Adjusted P-value"] < 0.01:
                         text_signatures[i] += "*"
-                html += f"<h5> {mode} </h5>"
-                html += "<p>" + ", ".join(gl) + "</p>"
-                html += "<p>" + ", ".join(text_signatures) + "</p>"
+                if output_file is not None:
+                    html += f"<h5> {mode} </h5>"
+                    html += "<p>" + ", ".join(gl) + "</p>"
+                    html += "<p>" + ", ".join(text_signatures) + "</p>"
+                else:
+                    print("[italic]{}[/italic]".format(mode))
+                    print(", ".join(gl))
+                    print(", ".join(text_signatures))
 
         plt.close(fig)
 
@@ -330,8 +344,6 @@ def explore_gamma_space(
         )
         with open(output_file, "w") as f:
             f.write(html)
-    else:
-        display(HTML(html))
 
 
 def de_genes(
