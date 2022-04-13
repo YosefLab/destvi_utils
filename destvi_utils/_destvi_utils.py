@@ -327,6 +327,7 @@ def explore_gamma_space(
                     html += "<p>" + ", ".join(gl) + "</p>"
                     html += "<p>" + ", ".join(text_signatures) + "</p>"
                 else:
+                    print("\n")
                     print("[italic]{}[/italic]".format(mode))
                     print(
                         "---------------------------------------------------------------------------------------"
@@ -336,7 +337,6 @@ def explore_gamma_space(
                         "---------------------------------------------------------------------------------------"
                     )
                     print(", ".join(text_signatures))
-                    print("\n")
 
         plt.close(fig)
 
