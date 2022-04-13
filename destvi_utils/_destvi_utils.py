@@ -337,6 +337,7 @@ def explore_gamma_space(
                         "---------------------------------------------------------------------------------------"
                     )
                     print(", ".join(text_signatures))
+            print("\n \n \n")
 
         plt.close(fig)
 
