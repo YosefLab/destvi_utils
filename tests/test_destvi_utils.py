@@ -17,8 +17,8 @@ def test_destvi():
     sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers)
     sc_model.train(1, train_size=1)
 
-    DestVI.setup_anndata(dataset, layer=None, vamp_prior_p=dataset.n_obs)
-    spatial_model = DestVI.from_rna_model(dataset, sc_model)
+    DestVI.setup_anndata(dataset, layer=None)
+    spatial_model = DestVI.from_rna_model(dataset, sc_model, vamp_prior_p=dataset.n_obs)
     spatial_model.train(max_epochs=1)
     assert not np.isnan(spatial_model.history["elbo_train"].values[0][0])
     dataset.obsm["proportions"] = spatial_model.get_proportions()
