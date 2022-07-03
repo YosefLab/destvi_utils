@@ -39,19 +39,21 @@ def _smooth_get_critical_points(x, noisy_data, k=5, s=0.1):
     return noisy_data, smoothed, derivative, sign_2nd, curvature
 
 
-def _get_autocorrelations(st_adata, stacked_quantiles, quantiles):
+def _get_autocorrelations(st_adata, stacked_quantiles, quantiles, key_spatial):
     # create Anndata and run hotspot
     adata = ad.AnnData(stacked_quantiles.T)
     adata.obs_names = st_adata.obs.index
     adata.var_names = [str(i) for i in quantiles]
-    adata.obsm["spatial"] = st_adata.obsm["spatial"]
-    hs = hotspot.Hotspot(adata, model="none", latent_obsm_key="spatial")
+    adata.obsm[key_spatial] = st_adata.obsm[key_spatial]
+    hs = hotspot.Hotspot(adata, model="none", latent_obsm_key=key_spatial)
     hs.create_knn_graph(
         weighted_graph=True,
         n_neighbors=10,
     )
     hs_results = hs.compute_autocorrelations(jobs=1)
     index = np.array([float(i) for i in hs_results.index.values])
+    # Numerical issues in hotspot. Filtering out virtually empty spots.
+    index[index < 1e-10] = 0
     return index, hs_results["Z"].values
 
 

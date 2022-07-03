@@ -19,7 +19,8 @@ from . import _utils
 
 
 def automatic_proportion_threshold(
-    st_adata, kind_threshold="primary", output_file=None, ct_list=None
+    st_adata, kind_threshold="primary", output_file=None, ct_list=None,
+    key_proportions='proportions', key_spatial='spatial'
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
@@ -38,6 +39,10 @@ def automatic_proportion_threshold(
         Defaults to None.
     ct_list
         Celltypes to use. Defaults to all celltypes.
+    key_proportions
+        Obsm key pointing to cell-type proportions.
+    key_spatial
+        Obsm key pointing to location of cells.
 
     Returns
     -------
@@ -45,17 +50,17 @@ def automatic_proportion_threshold(
         Dictionary containing all threshold values.
 
     """
-    if "proportions" not in st_adata.obsm:
+    if key_proportions not in st_adata.obsm:
         raise ValueError(
-            'Please provide cell type proportions in st_adata.obsm["proportions"] and restart.'
+            f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.',
         )
-    if "spatial" not in st_adata.obsm:
+    if key_spatial not in st_adata.obsm:
         raise ValueError(
-            'Please provide cell type locations in st_adata.obsm["spatial"] and restart.'
+            f'Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun.'
         )
 
     if ct_list is None:
-        ct_list = list(st_adata.obsm["proportions"].columns)
+        ct_list = list(st_adata.obsm[key_proportions].columns)
     ct_thresholds = {}
 
     html = "<h2>Automatic thresholding</h2>"
@@ -66,15 +71,15 @@ def automatic_proportion_threshold(
             name_ct + ": critical points", fontsize="x-large", fontweight="semibold"
         )
 
-        array = st_adata.obsm["proportions"][name_ct]
+        array = st_adata.obsm[key_proportions][name_ct]
         vmax = np.quantile(array.values, 0.99)
 
         # get characteristic values
         quantiles, stack = _utils._form_stacked_quantiles(array.values)
-        index, z_values = _utils._get_autocorrelations(st_adata, stack, quantiles)
+        index, z_values = _utils._get_autocorrelations(st_adata, stack, quantiles, key_spatial)
         (
             z_values,
-            smoothed,
+            _,
             derivative,
             sign_2nd,
             _,
@@ -98,8 +103,8 @@ def automatic_proportion_threshold(
         def plot_proportions_xy(ax, threshold):
             _utils._prettify_axis(ax, spatial=True)
             plt.scatter(
-                st_adata.obsm["spatial"][:, 0],
-                st_adata.obsm["spatial"][:, 1],
+                st_adata.obsm[key_spatial][:, 0],
+                st_adata.obsm[key_spatial][:, 1],
                 c=array * (array.values > threshold),
                 s=14,
                 vmax=vmax,
@@ -165,6 +170,8 @@ def explore_gamma_space(
     ct_thresholds=None,
     output_file=None,
     ct_list=None,
+    key_proportions='proportions',
+    key_spatial='spatial'
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
@@ -177,7 +184,7 @@ def explore_gamma_space(
     sc_model
         Trained CondSCVI model
     st_adata
-        Spatial sequencing dataset with proportions in obsm['proportions']. Otherwise uses data in st_model.
+        Spatial sequencing dataset with proportions in obsm[key_proportions]. Otherwise uses data in st_model.
     ct_threshold
         List with threshold values for cell type proportions
     output_file
@@ -185,6 +192,10 @@ def explore_gamma_space(
         Defaults to None.
     ct_list
         Celltypes to use. Defaults to all celltypes.
+    key_proportions
+        Obsm key pointing to cell-type proportions.
+    key_spatial
+        Obsm key pointing to location of cells.
 
     """
     if output_file is not None:
@@ -192,22 +203,21 @@ def explore_gamma_space(
 
     if st_adata is None:
         st_adata = st_model.adata
-        st_adata.obsm["proportions"] = st_model.get_proportions()
+        st_adata.obsm[key_proportions] = st_model.get_proportions()
     else:
-        if "proportions" not in st_adata.obsm:
+        if key_proportions not in st_adata.obsm:
             raise ValueError(
-                'Please provide cell type proportions in st_adata.obsm["proportions"] and restart.'
+                f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.',
             )
-
-    if "spatial" not in st_adata.obsm:
+    if key_spatial not in st_adata.obsm:
         raise ValueError(
-            'Please provide cell type locations in st_adata.obsm["spatial"] and restart.'
+            f'Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun.'
         )
 
     sc_adata = sc_model.adata
 
     if ct_list is None:
-        ct_list = list(st_adata.obsm["proportions"].columns)
+        ct_list = list(st_adata.obsm[key_proportions].columns)
     if ct_thresholds is None:
         ct_thresholds = {ct: 0 for ct in ct_list}
 
@@ -217,9 +227,14 @@ def explore_gamma_space(
     gamma = st_model.get_gamma(return_numpy=True)
 
     for name_ct in ct_list:
-        filter_ = st_adata.obsm["proportions"][name_ct].values > ct_thresholds[name_ct]
-        locations = st_adata.obsm["spatial"][filter_]
-        proportions = st_adata.obsm["proportions"][name_ct].values[filter_]
+        if ct_thresholds[name_ct] > np.max(st_adata.obsm[key_proportions][name_ct].values):
+            logging.warning(
+                f"Defined threshold {ct_thresholds[name_ct]} higher than highest proportion value. "
+                + f"Falling back to no threshold for cell-type {name_ct}"
+            )
+        filter_ = st_adata.obsm[key_proportions][name_ct].values > ct_thresholds[name_ct]
+        locations = st_adata.obsm[key_spatial][filter_]
+        proportions = st_adata.obsm[key_proportions][name_ct].values[filter_]
         ct_index = np.where(name_ct == st_model.cell_type_mapping)[0][0]
         data = gamma[:, :, ct_index][filter_]
         vec = _utils._get_spatial_components(locations, proportions, data)
@@ -247,15 +262,15 @@ def explore_gamma_space(
         ax3 = plt.subplot(131)
         _utils._prettify_axis(ax3, spatial=True)
         plt.scatter(
-            st_adata.obsm["spatial"][:, 0],
-            st_adata.obsm["spatial"][:, 1],
+            st_adata.obsm[key_spatial][:, 0],
+            st_adata.obsm[key_spatial][:, 1],
             alpha=0.1,
             s=7,
             c="blue",
         )
         plt.scatter(
-            st_adata.obsm["spatial"][filter_, 0],
-            st_adata.obsm["spatial"][filter_, 1],
+            st_adata.obsm[key_spatial][filter_, 0],
+            st_adata.obsm[key_spatial][filter_, 1],
             c=color,
             s=7,
         )
@@ -362,6 +377,7 @@ def de_genes(
     key=None,
     N_sample=10,
     pseudocount=0.01,
+    key_proportions="proportions"
 ):
     """
     Function to compute differential expressed genes from generative model.
@@ -370,7 +386,7 @@ def de_genes(
     Parameters
     ----------
     st_adata
-        Spatial sequencing dataset with proportions in obsm['proportions']. If not provided uses data in st_model.
+        Spatial sequencing dataset with proportions in obsm[key_proportions]. If not provided uses data in st_model.
     st_model
         Trained destVI model
     mask
@@ -387,6 +403,8 @@ def de_genes(
         N_samples drawn from generative model to simulate expression values.
     pseudocount
         Pseudocount added at computation of logFC. Increasing leads to lower logFC of lowly expressed genes.
+    key_proportions
+        Obsm key pointing to cell-type proportions.
 
     Returns
     -------
@@ -404,11 +422,11 @@ def de_genes(
 
     if st_adata is None:
         st_adata = st_model.adata
-        st_adata.obsm["proportions"] = st_model.get_proportions()
+        st_adata.obsm[key_proportions] = st_model.get_proportions()
     else:
-        if "proportions" not in st_adata.obsm:
+        if key_proportions not in st_adata.obsm:
             raise ValueError(
-                'Please provide cell type proportions in st_adata.obsm["proportions"] and restart.'
+                f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.'
             )
 
     if st_model.registry_["setup_args"]["layer"]:
@@ -416,8 +434,8 @@ def de_genes(
     else:
         expression = st_adata.X
 
-    mask = np.logical_and(mask, st_adata.obsm["proportions"][ct] > threshold)
-    mask2 = np.logical_and(mask2, st_adata.obsm["proportions"][ct] > threshold)
+    mask = np.logical_and(mask, st_adata.obsm[key_proportions][ct] > threshold)
+    mask2 = np.logical_and(mask2, st_adata.obsm[key_proportions][ct] > threshold)
 
     avg_library_size = np.mean(np.sum(expression, axis=1).flatten())
     exp_px_o = st_model.module.px_o.detach().exp().cpu().numpy()
@@ -476,7 +494,7 @@ def de_genes(
         return res
 
 
-def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
+def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None, key_spatial="spatial"):
     """
     Function to plot results of differential expressed genes in a Volcano plot.
     For further reference check [Lopez22]_.
@@ -484,7 +502,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
     Parameters
     ----------
     st_adata
-        Spatial sequencing dataset with proportions in obsm['proportions']. If not provided uses data in st_model.
+        Spatial sequencing dataset with precomputed de genes using de_genes function.
     key
         Key under which results of DE comparison are stored
     output_file
@@ -492,10 +510,13 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
         Defaults to None.
     interesting_genes
         Label dots in scatter plots with corresponding gene name. Uses first two genes if None.
+    key_spatial
+        Obsm key pointing to location of cells.
+
     """
-    if "spatial" not in st_adata.obsm:
+    if key_spatial not in st_adata.obsm:
         raise ValueError(
-            'Please provide locations in st_adata.obsm["spatial"] and restart.'
+            f'Please provide locations in st_adata.obsm[{key_spatial}] and rerun.'
         )
     if key not in st_adata.uns:
         raise ValueError(
@@ -510,7 +531,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None):
             )
         )
 
-    locations = st_adata.obsm["spatial"]
+    locations = st_adata.obsm[key_spatial]
     res = st_adata.uns[key]["de_results"]
     mask_active = st_adata.uns[key]["mask_active"]
     mask_rest = st_adata.uns[key]["mask_rest"]
