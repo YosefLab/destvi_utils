@@ -19,8 +19,12 @@ from . import _utils
 
 
 def automatic_proportion_threshold(
-    st_adata, kind_threshold="primary", output_file=None, ct_list=None,
-    key_proportions='proportions', key_spatial='spatial'
+    st_adata,
+    kind_threshold="primary",
+    output_file=None,
+    ct_list=None,
+    key_proportions="proportions",
+    key_spatial="spatial",
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
@@ -52,11 +56,11 @@ def automatic_proportion_threshold(
     """
     if key_proportions not in st_adata.obsm:
         raise ValueError(
-            f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.',
+            f"Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.",
         )
     if key_spatial not in st_adata.obsm:
         raise ValueError(
-            f'Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun.'
+            f"Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun."
         )
 
     if ct_list is None:
@@ -76,7 +80,9 @@ def automatic_proportion_threshold(
 
         # get characteristic values
         quantiles, stack = _utils._form_stacked_quantiles(array.values)
-        index, z_values = _utils._get_autocorrelations(st_adata, stack, quantiles, key_spatial)
+        index, z_values = _utils._get_autocorrelations(
+            st_adata, stack, quantiles, key_spatial
+        )
         (
             z_values,
             _,
@@ -170,8 +176,8 @@ def explore_gamma_space(
     ct_thresholds=None,
     output_file=None,
     ct_list=None,
-    key_proportions='proportions',
-    key_spatial='spatial'
+    key_proportions="proportions",
+    key_spatial="spatial",
 ):
     """
     Function to compute automatic threshold on cell type proportion values.
@@ -207,11 +213,11 @@ def explore_gamma_space(
     else:
         if key_proportions not in st_adata.obsm:
             raise ValueError(
-                f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.',
+                f"Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.",
             )
     if key_spatial not in st_adata.obsm:
         raise ValueError(
-            f'Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun.'
+            f"Please provide cell type locations in st_adata.obsm[{key_spatial}] and rerun."
         )
 
     sc_adata = sc_model.adata
@@ -227,12 +233,16 @@ def explore_gamma_space(
     gamma = st_model.get_gamma(return_numpy=True)
 
     for name_ct in ct_list:
-        if ct_thresholds[name_ct] > np.max(st_adata.obsm[key_proportions][name_ct].values):
+        if ct_thresholds[name_ct] > np.max(
+            st_adata.obsm[key_proportions][name_ct].values
+        ):
             logging.warning(
                 f"Defined threshold {ct_thresholds[name_ct]} higher than highest proportion value. "
                 + f"Falling back to no threshold for cell-type {name_ct}"
             )
-        filter_ = st_adata.obsm[key_proportions][name_ct].values > ct_thresholds[name_ct]
+        filter_ = (
+            st_adata.obsm[key_proportions][name_ct].values > ct_thresholds[name_ct]
+        )
         locations = st_adata.obsm[key_spatial][filter_]
         proportions = st_adata.obsm[key_proportions][name_ct].values[filter_]
         ct_index = np.where(name_ct == st_model.cell_type_mapping)[0][0]
@@ -377,7 +387,7 @@ def de_genes(
     key=None,
     N_sample=10,
     pseudocount=0.01,
-    key_proportions="proportions"
+    key_proportions="proportions",
 ):
     """
     Function to compute differential expressed genes from generative model.
@@ -426,7 +436,7 @@ def de_genes(
     else:
         if key_proportions not in st_adata.obsm:
             raise ValueError(
-                f'Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun.'
+                f"Please provide cell type proportions in st_adata.obsm[{key_proportions}] and rerun."
             )
 
     if st_model.registry_["setup_args"]["layer"]:
@@ -494,7 +504,9 @@ def de_genes(
         return res
 
 
-def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None, key_spatial="spatial"):
+def plot_de_genes(
+    st_adata, key, output_file=None, interesting_genes=None, key_spatial="spatial"
+):
     """
     Function to plot results of differential expressed genes in a Volcano plot.
     For further reference check [Lopez22]_.
@@ -516,7 +528,7 @@ def plot_de_genes(st_adata, key, output_file=None, interesting_genes=None, key_s
     """
     if key_spatial not in st_adata.obsm:
         raise ValueError(
-            f'Please provide locations in st_adata.obsm[{key_spatial}] and rerun.'
+            f"Please provide locations in st_adata.obsm[{key_spatial}] and rerun."
         )
     if key not in st_adata.uns:
         raise ValueError(
