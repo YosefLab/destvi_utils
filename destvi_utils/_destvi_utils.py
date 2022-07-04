@@ -240,9 +240,10 @@ def explore_gamma_space(
                 f"Defined threshold {ct_thresholds[name_ct]} higher than highest proportion value. "
                 + f"Falling back to no threshold for cell-type {name_ct}"
             )
-        filter_ = (
-            st_adata.obsm[key_proportions][name_ct].values > ct_thresholds[name_ct]
-        )
+            ct_threshold = 0
+        else:
+            ct_threshold = ct_thresholds[name_ct]
+        filter_ = st_adata.obsm[key_proportions][name_ct].values > ct_threshold
         locations = st_adata.obsm[key_spatial][filter_]
         proportions = st_adata.obsm[key_proportions][name_ct].values[filter_]
         ct_index = np.where(name_ct == st_model.cell_type_mapping)[0][0]
