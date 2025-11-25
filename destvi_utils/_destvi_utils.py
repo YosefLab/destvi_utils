@@ -292,7 +292,7 @@ def explore_gamma_space(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         ].copy()
         is_sparse = issparse(sc_adata_slice.X)
-        normalized_counts = sc_adata_slice.X.A if is_sparse else sc_adata_slice.X
+        normalized_counts = sc_adata_slice.X.toarray() if is_sparse else sc_adata_slice.X
         indices_ct = np.where(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         )[0]
@@ -449,12 +449,12 @@ def de_genes(
     mask2 = np.logical_and(mask2, st_adata.obsm[key_proportions][ct] > threshold)
 
     avg_library_size = np.mean(np.sum(expression, axis=1).flatten())
-    exp_px_o = st_model.module.px_o.detach().exp().cpu().numpy()
+    exp_px_r = st_model.module.px_r.detach().exp().cpu().numpy()
     imputations = st_model.get_scale_for_ct(ct).values
     mean = avg_library_size * imputations
 
-    concentration = torch.tensor(avg_library_size * imputations / exp_px_o)
-    rate = torch.tensor(1.0 / exp_px_o)
+    concentration = torch.tensor(avg_library_size * imputations / exp_px_r)
+    rate = torch.tensor(1.0 / exp_px_r)
 
     # slice conditions
     N_mask = N_unmask = N_sample
