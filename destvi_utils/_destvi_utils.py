@@ -292,7 +292,9 @@ def explore_gamma_space(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         ].copy()
         is_sparse = issparse(sc_adata_slice.X)
-        normalized_counts = sc_adata_slice.X.A if is_sparse else sc_adata_slice.X
+        normalized_counts = (
+            sc_adata_slice.X.toarray() if is_sparse else sc_adata_slice.X
+        )
         indices_ct = np.where(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         )[0]
@@ -328,7 +330,7 @@ def explore_gamma_space(
         # (A) display top 50 genes + AND - (B) for each gene set, get GSEA
         for d in [0, 1]:
             if output_file is not None:
-                html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+                html += f"<h4>Genes associated with SpatialPC{d + 1}</h4>"
             else:
                 print("[bold]Genes associated with SpatialPC{}[/bold]".format(d + 1))
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
@@ -339,9 +341,9 @@ def explore_gamma_space(
                 gl = list(st_adata.var.index[ranking[:50]])
                 enr = gseapy.enrichr(
                     gene_list=gl,
-                    description="pathway",
                     gene_sets="BioPlanet_2019",
                     outdir="test",
+                    organism="Human",
                     no_plot=True,
                 )
                 text_signatures = enr.results.head(10)["Term"].values
@@ -449,12 +451,12 @@ def de_genes(
     mask2 = np.logical_and(mask2, st_adata.obsm[key_proportions][ct] > threshold)
 
     avg_library_size = np.mean(np.sum(expression, axis=1).flatten())
-    exp_px_o = st_model.module.px_o.detach().exp().cpu().numpy()
+    exp_px_r = st_model.module.px_r.detach().exp().cpu().numpy()
     imputations = st_model.get_scale_for_ct(ct).values
     mean = avg_library_size * imputations
 
-    concentration = torch.tensor(avg_library_size * imputations / exp_px_o)
-    rate = torch.tensor(1.0 / exp_px_o)
+    concentration = torch.tensor(avg_library_size * imputations / exp_px_r)
+    rate = torch.tensor(1.0 / exp_px_r)
 
     # slice conditions
     N_mask = N_unmask = N_sample
