@@ -14,7 +14,7 @@ def test_destvi():
     dataset.obsm["spatial"] = np.random.randn(dataset.n_obs, 2)
     dataset.obs["overclustering_vamp"] = list(range(dataset.n_obs))
     CondSCVI.setup_anndata(dataset, labels_key="labels")
-    sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers)
+    sc_model = CondSCVI(dataset, n_latent=n_latent, n_layers=n_layers, prior="mog")
     sc_model.train(1, train_size=1)
 
     DestVI.setup_anndata(dataset, layer=None)

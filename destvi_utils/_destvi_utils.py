@@ -341,7 +341,6 @@ def explore_gamma_space(
                 gl = list(st_adata.var.index[ranking[:50]])
                 enr = gseapy.enrichr(
                     gene_list=gl,
-                    description="pathway",
                     gene_sets="BioPlanet_2019",
                     outdir="test",
                     no_plot=True,
