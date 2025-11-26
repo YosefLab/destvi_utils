@@ -1,11 +1,27 @@
 import numpy as np
 from scvi.data import synthetic_iid
 from scvi.model import CondSCVI, DestVI
-
+from unittest.mock import patch, MagicMock
+import pandas as pd
 import destvi_utils
 
 
-def test_destvi():
+@patch("gseapy.enrichr")
+def test_destvi(mock_enrichr):
+    # mock enrichr results
+    fake_df = pd.DataFrame(
+        {
+            "Term": ["fake_pathway"],
+            "Overlap": ["5/100"],
+            "Adjusted P-value": [0.05],
+            "Genes": ["gene_1;gene_2"],
+        }
+    )
+
+    mock_instance = MagicMock()
+    mock_instance.results = fake_df
+    mock_enrichr.return_value = mock_instance
+
     # Step1 learn CondSCVI
     n_latent = 2
     n_labels = 5
