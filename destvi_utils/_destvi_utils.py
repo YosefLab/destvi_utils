@@ -292,7 +292,9 @@ def explore_gamma_space(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         ].copy()
         is_sparse = issparse(sc_adata_slice.X)
-        normalized_counts = sc_adata_slice.X.toarray() if is_sparse else sc_adata_slice.X
+        normalized_counts = (
+            sc_adata_slice.X.toarray() if is_sparse else sc_adata_slice.X
+        )
         indices_ct = np.where(
             sc_adata.obs[sc_model.registry_["setup_args"]["labels_key"]] == name_ct
         )[0]
@@ -328,7 +330,7 @@ def explore_gamma_space(
         # (A) display top 50 genes + AND - (B) for each gene set, get GSEA
         for d in [0, 1]:
             if output_file is not None:
-                html += f"<h4>Genes associated with SpatialPC{d+1}</h4>"
+                html += f"<h4>Genes associated with SpatialPC{d + 1}</h4>"
             else:
                 print("[bold]Genes associated with SpatialPC{}[/bold]".format(d + 1))
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
