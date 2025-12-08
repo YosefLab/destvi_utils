@@ -13,11 +13,11 @@ Implementation of the automatic pipeline for downstream analysis of DestVI's res
 ```
 pip install git+https://github.com/yoseflab/destvi_utils.git
 ```
-Please be sure to install a version of [PyTorch](https://pytorch.org/) that is compatible with your GPU (if applicable).
 
+Please be sure to install a version of [PyTorch](https://pytorch.org/) that is compatible with your GPU (if applicable).
 
 # Resources
 
--   API reference, and installation guides are available in
+- API reference, and installation guides are available in
     the [documentation](https://destvi-utils.readthedocs.io/en/latest/).
--   Please use the [issues](https://github.com/yoseflab/destvi_utils_/issues) to submit bug reports.
+- Please use the [issues](https://github.com/yoseflab/destvi_utils_/issues) to submit bug reports.
