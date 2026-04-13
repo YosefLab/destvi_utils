@@ -33,7 +33,7 @@ version = "0.2.0"
 adjustText = ">=0.7.1"
 anndata = ">=0.7.5"
 black = {version = ">=20.8b1", optional = true}
-cmap2d = {git = "https://github.com/cane11/cmap2d", tag = "master"}
+cmap2d = {git = "https://github.com/cane11/cmap2d", tag = "v1.0"}
 codecov = {version = ">=2.0.8", optional = true}
 flake8 = {version = ">=3.7.7", optional = true}
 gseapy = {version = ">=0.10.2"}
