@@ -343,7 +343,7 @@ def explore_gamma_space(
                     gene_list=gl,
                     gene_sets="BioPlanet_2019",
                     outdir="test",
-                    organism="Human",
+                    organism="human",
                     no_plot=True,
                 )
                 text_signatures = enr.results.head(10)["Term"].values
