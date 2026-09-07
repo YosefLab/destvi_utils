@@ -447,11 +447,11 @@ def de_genes(
     else:
         expression = st_adata.X
 
-    mask = np.logical_and(
-        mask, st_adata.obsm[key_proportions][ct].to_numpy() > threshold
+    mask = np.asarray(
+        np.logical_and(mask, st_adata.obsm[key_proportions][ct].to_numpy() > threshold)
     )
-    mask2 = np.logical_and(
-        mask2, st_adata.obsm[key_proportions][ct].to_numpy() > threshold
+    mask2 = np.asarray(
+        np.logical_and(mask2, st_adata.obsm[key_proportions][ct].to_numpy() > threshold)
     )
 
     avg_library_size = np.mean(np.sum(expression, axis=1).flatten())
