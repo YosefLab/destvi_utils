@@ -12,7 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
-import destvi_utils  # noqa
+import destvi_utils
 
 # -- General configuration ---------------------------------------------
 
