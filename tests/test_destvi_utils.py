@@ -1,8 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pandas as pd
 from scvi.data import synthetic_iid
 from scvi.model import CondSCVI, DestVI
-from unittest.mock import patch, MagicMock
-import pandas as pd
+
 import destvi_utils
 
 
