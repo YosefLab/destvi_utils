@@ -38,7 +38,7 @@ logger.propagate = False
 
 __all__ = [
     "automatic_proportion_threshold",
-    "explore_gamma_space",
     "de_genes",
+    "explore_gamma_space",
     "plot_de_genes",
 ]
