@@ -17,6 +17,8 @@ from statsmodels.stats.multitest import multipletests
 
 from . import _utils
 
+logger = logging.getLogger(__name__)
+
 
 def automatic_proportion_threshold(
     st_adata,
@@ -100,13 +102,11 @@ def automatic_proportion_threshold(
             ct_thresholds[name_ct] = ipoints[0]
         else:
             raise ArgumentError(
-                'Kind threshold {} is not defined. Use "secondary" or "primary"'.format(
-                    kind_threshold
-                )
+                f'Kind threshold {kind_threshold} is not defined. Use "secondary" or "primary"'
             )
 
         # PLOT 1 shows proportions in spatial dimensions without thresholding
-        def plot_proportions_xy(ax, threshold):
+        def plot_proportions_xy(ax, threshold, array=array, vmax=vmax):
             _utils._prettify_axis(ax, spatial=True)
             plt.scatter(
                 st_adata.obsm[key_spatial][:, 0],
@@ -117,7 +117,7 @@ def automatic_proportion_threshold(
                 cmap="Reds",
             )
             plt.colorbar()
-            plt.title("name_ct, threshold: t={:0.3f}".format(threshold))
+            plt.title(f"name_ct, threshold: t={threshold:0.3f}")
             plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
             return ax
@@ -151,17 +151,15 @@ def automatic_proportion_threshold(
             tmpfile = BytesIO()
             plt.savefig(tmpfile, format="png")
             encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-            html += "<img src='data:image/png;base64,{}'>".format(encoded)
+            html += f"<img src='data:image/png;base64,{encoded}'>"
             plt.close()
         else:
             plt.show()
 
     # dump+write to HTML
     if output_file is not None:
-        logging.warning(
-            "Saving output to {}. Set output_file=None to display results.".format(
-                output_file
-            )
+        logger.warning(
+            f"Saving output to {output_file}. Set output_file=None to display results."
         )
         with open(output_file, "w") as f:
             f.write(html)
@@ -236,7 +234,7 @@ def explore_gamma_space(
         if ct_thresholds[name_ct] > np.max(
             st_adata.obsm[key_proportions][name_ct].values
         ):
-            logging.warning(
+            logger.warning(
                 f"Defined threshold {ct_thresholds[name_ct]} higher than highest proportion value. "
                 + f"Falling back to no threshold for cell-type {name_ct}"
             )
@@ -266,8 +264,8 @@ def explore_gamma_space(
         # variance and explained variance
         total_var = np.sum(np.diag(np.cov(data.T)))
         explained_var = 100 * np.diag(np.cov(projection.T)) / total_var
-        plt.xlabel("SpatialPC1 ({:.1f}% explained var)".format(explained_var[0]))
-        plt.ylabel("SpatialPC2 ({:.1f}% explained var)".format(explained_var[1]))
+        plt.xlabel(f"SpatialPC1 ({explained_var[0]:.1f}% explained var)")
+        plt.ylabel(f"SpatialPC2 ({explained_var[1]:.1f}% explained var)")
         plt.title("Projection of the spatial data")
 
         ax3 = plt.subplot(131)
@@ -312,8 +310,8 @@ def explore_gamma_space(
         # variance and explained variance
         total_var = np.sum(np.diag(np.cov(sc_latent.T)))
         explained_var = 100 * np.diag(np.cov(sc_projection.T)) / total_var
-        plt.xlabel("SpatialPC1 ({:.1f}% explained var)".format(explained_var[0]))
-        plt.ylabel("SpatialPC2 ({:.1f}% explained var)".format(explained_var[1]))
+        plt.xlabel(f"SpatialPC1 ({explained_var[0]:.1f}% explained var)")
+        plt.ylabel(f"SpatialPC2 ({explained_var[1]:.1f}% explained var)")
         plt.title("Projection of the scRNA-seq data")
         plt.tight_layout(rect=[0, 0.03, 1, 0.9])
 
@@ -322,7 +320,7 @@ def explore_gamma_space(
         plt.savefig(tmpfile, dpi="figure", format="png")
         encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
         if output_file is not None:
-            html += "<img src='data:image/png;base64,{}'>".format(encoded)
+            html += f"<img src='data:image/png;base64,{encoded}'>"
         else:
             plt.show()
 
@@ -332,7 +330,7 @@ def explore_gamma_space(
             if output_file is not None:
                 html += f"<h4>Genes associated with SpatialPC{d + 1}</h4>"
             else:
-                print("[bold]Genes associated with SpatialPC{}[/bold]".format(d + 1))
+                print(f"[bold]Genes associated with SpatialPC{d + 1}[/bold]")
             r = _utils._vcorrcoef(normalized_counts.T, sc_projection[:, d])
             for mode in ["Positively", "Negatively"]:
                 ranking = np.argsort(r)
@@ -356,7 +354,7 @@ def explore_gamma_space(
                     html += "<p>" + ", ".join(text_signatures) + "</p>"
                 else:
                     print("\n")
-                    print("[italic]{}[/italic]".format(mode))
+                    print(f"[italic]{mode}[/italic]")
                     print(
                         "---------------------------------------------------------------------------------------"
                     )
@@ -371,10 +369,8 @@ def explore_gamma_space(
 
     # write HTML
     if output_file is not None:
-        logging.warning(
-            "Saving output to {}. Set output_file=None to display results.".format(
-                output_file
-            )
+        logger.warning(
+            f"Saving output to {output_file}. Set output_file=None to display results."
         )
         with open(output_file, "w") as f:
             f.write(html)
@@ -545,9 +541,7 @@ def plot_de_genes(
     if not matching_genes.all():
         missing_genes = np.array(interesting_genes)[~matching_genes]
         raise ValueError(
-            "{} are not in st_adata.var_names. Remove these genes from interesting_genes.".format(
-                missing_genes
-            )
+            f"{missing_genes} are not in st_adata.var_names. Remove these genes from interesting_genes."
         )
 
     locations = st_adata.obsm[key_spatial]
@@ -590,7 +584,7 @@ def plot_de_genes(
             texts,
             res["log2FC"].values,
             res["score"].values,
-            arrowprops=dict(arrowstyle="-", color="blue"),
+            arrowprops={"arrowstyle": "-", "color": "blue"},
         )
 
     ax2 = plt.subplot(121)
@@ -615,10 +609,8 @@ def plot_de_genes(
 
     plt.tight_layout()
     if output_file is not None:
-        logging.warning(
-            "Saving output to {}. Set output_file=None to display results.".format(
-                output_file
-            )
+        logger.warning(
+            f"Saving output to {output_file}. Set output_file=None to display results."
         )
         plt.savefig(output_file, dpi=300)
         plt.close()
