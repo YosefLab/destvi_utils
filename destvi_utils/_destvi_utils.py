@@ -17,6 +17,8 @@ from statsmodels.stats.multitest import multipletests
 
 from . import _utils
 
+logger = logging.getLogger(__name__)
+
 
 def automatic_proportion_threshold(
     st_adata,
@@ -104,7 +106,7 @@ def automatic_proportion_threshold(
             )
 
         # PLOT 1 shows proportions in spatial dimensions without thresholding
-        def plot_proportions_xy(ax, threshold):
+        def plot_proportions_xy(ax, threshold, array=array, vmax=vmax):
             _utils._prettify_axis(ax, spatial=True)
             plt.scatter(
                 st_adata.obsm[key_spatial][:, 0],
@@ -156,7 +158,7 @@ def automatic_proportion_threshold(
 
     # dump+write to HTML
     if output_file is not None:
-        logging.warning(
+        logger.warning(
             f"Saving output to {output_file}. Set output_file=None to display results."
         )
         with open(output_file, "w") as f:
@@ -232,7 +234,7 @@ def explore_gamma_space(
         if ct_thresholds[name_ct] > np.max(
             st_adata.obsm[key_proportions][name_ct].values
         ):
-            logging.warning(
+            logger.warning(
                 f"Defined threshold {ct_thresholds[name_ct]} higher than highest proportion value. "
                 + f"Falling back to no threshold for cell-type {name_ct}"
             )
@@ -367,7 +369,7 @@ def explore_gamma_space(
 
     # write HTML
     if output_file is not None:
-        logging.warning(
+        logger.warning(
             f"Saving output to {output_file}. Set output_file=None to display results."
         )
         with open(output_file, "w") as f:
@@ -582,7 +584,7 @@ def plot_de_genes(
             texts,
             res["log2FC"].values,
             res["score"].values,
-            arrowprops=dict(arrowstyle="-", color="blue"),
+            arrowprops={"arrowstyle": "-", "color": "blue"},
         )
 
     ax2 = plt.subplot(121)
@@ -607,7 +609,7 @@ def plot_de_genes(
 
     plt.tight_layout()
     if output_file is not None:
-        logging.warning(
+        logger.warning(
             f"Saving output to {output_file}. Set output_file=None to display results."
         )
         plt.savefig(output_file, dpi=300)
